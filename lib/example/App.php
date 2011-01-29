@@ -1,6 +1,6 @@
 <?php
 
-namespace \example;
+namespace example;
 
 class App {
     function call($env)
