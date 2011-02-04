@@ -2,7 +2,7 @@
 
 namespace example\tests;
 
-use \example\App;
+use example\App;
 
 class AppTest extends \PHPUnit_Framework_TestCase
 {

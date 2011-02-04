@@ -4,8 +4,11 @@
     bootstrap="tests/bootstrap.php"
 >
     <testsuites>
-        <testsuite name="rubidium">
+        <!--testsuite name="rubidium">
             <directory>tests/rubidium</directory>
+        </testsuite-->
+        <testsuite name="example">
+            <directory>tests/example</directory>
         </testsuite>
     </testsuites>
 </phpunit>
