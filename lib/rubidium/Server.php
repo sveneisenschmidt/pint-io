@@ -39,17 +39,26 @@ class Server
         return $this->env;
     }
 
+    function pid()
+    {
+        return posix_getpid();
+    }
+
     function start($env)
     {
         $this->env = (string)$env;
 
-//        $this->writePidFile();
+        if (file_exists($this->config["pid_file"])) {
+            throw new Exception($this->config["pid_file"] . " already exists.");
+        }
+        file_put_contents($this->config["pid_file"], $this->pid());
 
         list($host, $port) = explode(":", $this->config["listen"]);
         $this->socket = socket_create(AF_INET, SOCK_STREAM, getprotobyname("tcp"));
         socket_bind($this->socket, $host, $port);
 
         $this->forkWorkers();
+        usleep(500000);
         $this->loop();
     }
 
@@ -74,13 +83,9 @@ class Server
         $count = $this->config["fork"] ? $this->config["workers"] : 1;
         for ($i = count($this->workers); $i < $count; $i++)
         {
-            $this->workers []= new Worker($this, $this->socket);
-        }
-
-        foreach ($this->workers as $worker)
-        {
-            if ($this->config["fork"] && !$worker->forked())
-            {
+            $worker = new Worker($this, $this->socket);
+            $this->workers []= $worker;
+            if ($this->config["fork"]) {
                 $worker->fork();
             }
         }
@@ -88,10 +93,12 @@ class Server
 
     function maintainWorkers()
     {
+        pcntl_wait($status, WNOHANG);
+
         foreach ($this->workers as $i => $worker)
         {
-            if (!$worker->responsive())
-                    {
+            if (!$worker->alive() || !$worker->responsive())
+            {
                 $worker->kill();
                 unset($this->workers[$i]);
             }
@@ -112,7 +119,7 @@ class Server
         $config = require $file;
         if (!is_array($config))
         {
-            echo "Could not find a config in $file\n";
+            throw new Exception("Could not find a config in $file");
         }
         return new self($config);
     }

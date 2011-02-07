@@ -30,35 +30,51 @@ class Worker
     function fork()
     {
         $pid = pcntl_fork();
-        $this->forked = $pid == 0;
         if ($pid === false)
         {
             throw new Exception("rubidium was unable to fork.");
         }
 
-        $this->pid = $pid;
-
+        $this->forked = $pid == 0;
         if ($this->forked)
         {
-            $this->ping();
+            $this->pid = posix_getpid();
             $this->loop();
             die();
+        } else {
+            $this->pid = $pid;
         }
     }
 
-    function ping()
+    function pingFile()
     {
         $config = $this->server->config();
-        touch($config["socket_file"] . "." . $this->pid());
+        return $config["socket_file"] . "." . $this->pid();
+    }
+
+    // @todo Use posix_mkfifo()
+    function ping()
+    {
+        touch($this->pingFile());
+    }
+
+    function alive()
+    {
+        echo "$this->pid - " . @print_r(pcntl_getpriority($this->pid()), true) . "\n";
+        return @pcntl_getpriority($this->pid()) !== false;
     }
 
     function responsive()
     {
+        if (!file_exists($this->pingFile())) {
+            return false;
+        }
+
         $config = $this->server->config();
         
         clearstatcache();
-        $mtime = filemtime($config["socket_file"] . "." . $this->pid());
-        return $mtime > (time() > $config["timeout"]);
+        $mtime = filemtime($this->pingFile());
+        return $mtime > (time() - $config["timeout"]);
     }
 
     function loop()
@@ -71,6 +87,11 @@ class Worker
 
     function serve()
     {
+        $this->ping();
+        echo "Worker->serve() - serving (pid=$this->pid)\n";
+        usleep(1000000);
+        return;
+
         if (socket_select($this->socket, 10) && $fd = socket_accept($this->socket))
         {
             $this->ping();
@@ -90,6 +111,7 @@ class Worker
 
     function kill()
     {
-        
+        posix_kill($this->pid(), SIGKILL);
+        unlink($this->pingFile());
     }
 }

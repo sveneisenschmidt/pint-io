@@ -9,18 +9,17 @@ return array(
 //        return $server->env() != "development";
 //    },
     "workers" => 4,
-    "boot" => function($worker) {
+    "boot" => function($server) {
         $loader = new SplClassLoader("example", "lib");
         $loader->register();
 
         $server->use("rubidium\Logging");
         $server->run("example\App");
     },
-    "fork" => true,
     "before_fork" => function($worker) {
         echo "[master] Forking worker (pid=" . $worker->pid() . ")";
     },
     "after_fork" => function($worker) {
-        echo "[pid=" . $worker->pid . "] Forked worker";
+        echo "[pid=" . $worker->pid() . "] Forked worker";
     }
 );
