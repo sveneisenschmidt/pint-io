@@ -8,7 +8,8 @@ return array(
 //    "fork" => function($server) {
 //        return $server->env() != "development";
 //    },
-    "workers" => 4,
+    "workers" => 8,
+    "max_requests" => 1,
     "boot" => function($server) {
         $loader = new SplClassLoader("example", "lib");
         $loader->register();
