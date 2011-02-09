@@ -41,11 +41,8 @@ class Worker
         {
             $this->pid = posix_getpid();
 
-            echo "[" . $this->pid() . "] forked (server->shuttingDown=" . (int)$this->server->shuttingDown() . ")\n";
-
             $t = $this;
             $callback = function($signo) use ($t) {
-                echo "[" . $t->pid() . "] received SIGTERM\n";
                 $t->shutdown();
             };
             pcntl_signal(SIGTERM, $callback);
@@ -53,6 +50,8 @@ class Worker
 
             $this->ping();
             $this->loop();
+            
+            unlink($this->pingFile());
             die();
         } else {
             $this->pid = $pid;
@@ -80,7 +79,7 @@ class Worker
     {
         if (!file_exists($this->pingFile()))
         {
-            return false;
+            return null;
         }
 
         $config = $this->server->config();
@@ -98,19 +97,8 @@ class Worker
             $this->serve();
             $this->ping();
 
-            $config = $this->server->config();
-            if ($this->requests == $config["max_requests"])
-            {
-                $this->shutdown();
-            }
-            else
-            {
-                pcntl_signal_dispatch();
-            }
+            pcntl_signal_dispatch();
         }
-
-        echo "[" . $this->pid() . "] shutting down\n";
-        unlink($this->pingFile());
     }
 
     function serve()
@@ -118,23 +106,28 @@ class Worker
         $socket = @socket_accept($this->socket);
         if (!$socket)
         {
+//            echo socket_strerror(socket_last_error($this->socket)) . "\n";
 //            echo "No Connection...\n";
-            usleep(1000);
+            usleep(250);
             return;
         }
+        
+        $this->requests++;
 
 //        echo "Connection!\n";
 
         $conn = new Connection($socket);
-        var_dump($conn->env());
         $conn->write(array(
             200,
             array("Content-Type" => "text/plain", "Content-Length" => 12),
             "Hello World!"
         ));
-        $conn->close();
 
-        $this->requests++;
+        $config = $this->server->config();
+        if ($this->requests == $config["max_requests"])
+        {
+            $this->shutdown();
+        }
     }
 
     function shuttingDown()
@@ -144,20 +137,19 @@ class Worker
 
     function shutdown()
     {
-        if ($this->forked)
+        $this->shuttingDown = true;
+        if (!$this->forked)
         {
-            echo "[" . $this->pid() . "] starting to shutdown\n";
-            $this->shuttingDown = true;
-        }
-        else
-        {
-            echo "[master-" . posix_getpid() . "] sending SIGTERM to " . $this->pid() . "\n";
             posix_kill($this->pid(), SIGTERM);
         }
     }
 
-    function kill()
+    function kill($force = false)
     {
+        if ($this->shuttingDown() && !$force)
+        {
+            return; 
+        }
         unlink($this->pingFile());
         posix_kill($this->pid(), SIGKILL);
     }

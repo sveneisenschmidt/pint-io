@@ -8,7 +8,7 @@ class Request
 
     function __construct(array $env)
     {
-        $this->env =& $env;
+        $this->env = $env;
     }
 
     function env()

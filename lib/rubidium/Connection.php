@@ -50,19 +50,123 @@ class Connection
     function __construct($socket)
     {
         $this->socket = $socket;
+        socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 250));
+        socket_set_option($this->socket, SOL_SOCKET, SO_SNDTIMEO, array("sec" => 0, "usec" => 250));
+        $this->read();
 
-        if (!$req = $this->readRequestLine())
+        return;
+        var_dump($data);
+
+        preg_match("#^(GET|HEAD|POST|PUT|OPTIONS|DELETE)\s+([^\s]+)\s+HTTP/1\.(0|1)$#U", $data[0], $matches);
+        if (empty($matches))
         {
-            $this->write(array(
-                400,
-                array("Content-Type" => "text/html"),
-                array("400 " . $this->status[400])
-            ));
-            $this->close();
+            $this->criticizeSyntax();
+        }
+        list($nothing, $this->method, $this->uri, $this->version) = $matches;
+
+        $this->headers = array();
+        foreach (explode("\r\n", $data[1]) as $header)
+        {
+            list($key, $value) = preg_split("#:\s*#", trim($header), 2);
+            $this->headers[trim($key)] = trim($value);
+        }
+    }
+
+    function criticizeSyntax()
+    {
+        $this->write(array(
+            400,
+            array("Content-Type" => "text/html"),
+            array("400 " . $this->status[400])
+        ));
+    }
+
+    function read()
+    {
+        $buf = "";
+        while ($chunk = socket_read($this->socket, 1024, PHP_BINARY_READ))
+        {
+            $buf .= $chunk;
+        }
+        if ($chunk === false)
+        {
+            echo "[" . posix_getpid() . "] read error: " . socket_strerror(socket_last_error($this->socket)) . "\n";
         }
 
-        list($this->method, $this->uri, $this->version) = $this->readRequestLine();
-        $headers = $this->readHeaders();
+//        echo $buf;
+
+        return;
+
+        $buf = "";
+        while (true)
+        {
+            $chunk = socket_read($this->socket, 16384, PHP_BINARY_READ);
+            if ($chunk === false)
+            {
+                echo socket_strerror(socket_last_error());
+                return array();
+            }
+            
+            $buf .= $chunk;
+            if ((strlen($chunk) < 16384) || empty($chunk))
+            {
+                // done
+                break;
+            }
+        }
+
+        $request = strstr($buf, "\r\n", true);
+        return array(
+            trim($request),
+            trim(substr(strstr($buf, "\r\n\r\n", true), strlen($request))),
+            trim(strstr($buf, "\r\n\r\n"))
+        );
+    }
+
+    function write(array $response)
+    {
+        // response line
+        $str = "HTTP/1.1 " . $response[0] . " " . $this->status[$response[0]] . "\r\n";
+
+        // headers
+        foreach ($response[1] as $key => $value)
+        {
+            $str .= $key . ": " . $value . "\r\n";
+        }
+        $str .= "\r\n";
+
+        // body
+        if (is_string($response[2]))
+        {
+            $str .= $response[2] . "\r\n";
+        }
+        else
+        {
+            foreach ($response[2] as $line)
+            {
+                $str .= $line . "\r\n";
+            }
+        }
+
+        // null byte
+        $str .= chr(0);
+
+        $bytes = strlen($str);
+        $written = 0;
+        while ($written < $bytes)
+        {
+            $x = socket_write($this->socket, $str, $bytes);
+            if (!is_int($x))
+            {
+                echo "[" . posix_getpid() . "] write error: " . socket_strerror(socket_last_error($this->socket)) . "\n";
+            }
+            else
+            {
+                $written += $x;
+            }
+        }
+
+        socket_close($this->socket);
     }
 
     function method()
@@ -78,6 +182,11 @@ class Connection
     function version()
     {
         return $this->version;
+    }
+
+    function headers()
+    {
+        return $this->headers;
     }
 
     function env()
@@ -96,63 +205,48 @@ class Connection
             $env["HTTP_" . strtoupper($key)] = $value;
         }
         return array_merge($env, array(
-            "HTTP_VERSION" => $this->version
+            "HTTP_VERSION" => "HTTP/1." . $this->version
         ));
     }
 
-    function readRequestLine()
-    {
-        $line = trim(socket_read($this->socket, 4096, PHP_NORMAL_READ));
-        preg_match("#^(GET|HEAD|POST|PUT|OPTIONS|DELETE)\s+([^\s]+)\s+HTTP/1\.(0|1)$#U", $line, $matches);
-        if (!count($matches))
-        {
-            return false;
-        }
+//    function readRequestLine()
+//    {
+//        $line = trim(socket_read($this->socket, 4096, PHP_NORMAL_READ));
+//        preg_match("#^(GET|HEAD|POST|PUT|OPTIONS|DELETE)\s+([^\s]+)\s+HTTP/1\.(0|1)$#U", $line, $matches);
+//        if (!count($matches))
+//        {
+//            return false;
+//        }
+//
+//        return array(
+//            $matches[1],
+//            $matches[2],
+//            "HTTP/1." . $matches[3]
+//        );
+//    }
 
-        return $matches[0];
-    }
-
-    function readHeaders()
-    {
-    }
-
-    function readLine()
-    {
-        return socket_read($this->socket, 1024, PHP_NORMAL_READ);
-    }
-
-    function write(array $response)
-    {
-        // response line
-        $str = "HTTP/1.1 " . $response[0] . " " . $this->status[$response[0]] . "\r\n";
-
-        // headers
-        foreach ($response[1] as $key => $value)
-        {
-            $str .= $key . ": " . $value;
-        }
-        $str .= "\r\n";
-
-        // body
-        if (is_string($response[2]))
-        {
-            $str .= $response[2];
-        }
-        else
-        {
-            foreach ($response[2] as $line)
-            {
-                $str .= $line . "\r\n";
-            }
-        }
-
-        $bytes = strlen($str);
-        $written = 0;
-        while ($written < $bytes)
-        {
-            $written += socket_write($this->socket, $str, $bytes);
-        }
-
-        socket_close($this->socket);
-    }
+//    function readHeaders()
+//    {
+//        $headers = array();
+//        while ($line = socket_read($this->socket, 1024, PHP_NORMAL_READ))
+//        {
+//            var_dump($line);
+//            if ($line == "\n" || $line == "\r")
+//            {
+//                continue;
+//            }
+//            elseif ($line == "\r\n")
+//            {
+//                break;
+//            }
+//            list($key, $value) = preg_split("#:\s*#", $line, 1);
+//            $headers[$key] = $value;
+//        }
+//        return $headers;
+//    }
+//
+//    function readLine()
+//    {
+//        return socket_read($this->socket, 1024, PHP_NORMAL_READ);
+//    }
 }

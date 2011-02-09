@@ -9,7 +9,7 @@ class App
     function __construct(array $env)
     {
         $this->env = $env;
-        $this->request = new Request(&$this->env);
+        $this->request = new Request($this->env);
         $this->response = new Response();
     }
 
@@ -20,12 +20,12 @@ class App
 
     function request()
     {
-        return $this->request();
+        return $this->request;
     }
 
     function response()
     {
-        return $this->response();
+        return $this->response;
     }
 
     function process()
