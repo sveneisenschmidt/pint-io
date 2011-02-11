@@ -50,6 +50,8 @@ class Server
         $this->env = (string)$env;
         $this->pid = posix_getpid();
 
+        ob_implicit_flush();
+
         if (file_exists($this->config["pid_file"])) {
             throw new Exception($this->config["pid_file"] . " already exists.");
         }

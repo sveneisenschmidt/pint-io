@@ -103,12 +103,19 @@ class Worker
 
     function serve()
     {
+        $r = array($this->socket);
+        $w = array();
+        $x = array();
+        if (!socket_select($r, $w, $x, 1))
+        {
+            return;
+        }
+
+//        $start = microtime();
+
         $socket = @socket_accept($this->socket);
         if (!$socket)
         {
-//            echo socket_strerror(socket_last_error($this->socket)) . "\n";
-//            echo "No Connection...\n";
-            usleep(250);
             return;
         }
         
@@ -121,6 +128,7 @@ class Worker
             200,
             array("Content-Type" => "text/plain", "Content-Length" => 12),
             "Hello World!"
+//        ), $start);
         ));
 
         $config = $this->server->config();

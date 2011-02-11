@@ -1,0 +1,6 @@
+zuviel io!
+
+* in jedem worker alle 1ms socket_accept
+* daher alle ~1ms touch() auf ping-file
+
+-> socket_select mit 1s timeout, dann socket_accept

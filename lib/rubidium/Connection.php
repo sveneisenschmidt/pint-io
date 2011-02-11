@@ -52,7 +52,9 @@ class Connection
         $this->socket = $socket;
         socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 250));
         socket_set_option($this->socket, SOL_SOCKET, SO_SNDTIMEO, array("sec" => 0, "usec" => 250));
+        
         $this->read();
+//        $this->parse();
 
         return;
         var_dump($data);
@@ -83,50 +85,26 @@ class Connection
 
     function read()
     {
-        $buf = "";
+        $this->input = "";
         while ($chunk = socket_read($this->socket, 1024, PHP_BINARY_READ))
         {
-            $buf .= $chunk;
+            $this->input .= $chunk;
         }
         if ($chunk === false)
         {
-            echo "[" . posix_getpid() . "] read error: " . socket_strerror(socket_last_error($this->socket)) . "\n";
+//            echo "[" . posix_getpid() . "] read error: " . socket_strerror(socket_last_error($this->socket)) . "\n";
         }
-
-//        echo $buf;
-
-        return;
-
-        $buf = "";
-        while (true)
-        {
-            $chunk = socket_read($this->socket, 16384, PHP_BINARY_READ);
-            if ($chunk === false)
-            {
-                echo socket_strerror(socket_last_error());
-                return array();
-            }
-            
-            $buf .= $chunk;
-            if ((strlen($chunk) < 16384) || empty($chunk))
-            {
-                // done
-                break;
-            }
-        }
-
-        $request = strstr($buf, "\r\n", true);
-        return array(
-            trim($request),
-            trim(substr(strstr($buf, "\r\n\r\n", true), strlen($request))),
-            trim(strstr($buf, "\r\n\r\n"))
-        );
     }
 
-    function write(array $response)
+    function write(array $response, $start = null)
     {
         // response line
         $str = "HTTP/1.1 " . $response[0] . " " . $this->status[$response[0]] . "\r\n";
+
+//        if (!is_null($start))
+//        {
+//            $response[2] = "server time: " . (microtime() - $start) . "\n" . $response[2];
+//        }
 
         // headers
         foreach ($response[1] as $key => $value)
@@ -149,7 +127,8 @@ class Connection
         }
 
         // null byte
-        $str .= chr(0);
+//        $str .= chr(0);
+        $str .= "\r\n";
 
         $bytes = strlen($str);
         $written = 0;
@@ -166,6 +145,7 @@ class Connection
             }
         }
 
+        socket_set_option($this->socket, SOL_SOCKET, SO_LINGER, array("l_onoff" => 1, "l_linger" => 1));
         socket_close($this->socket);
     }
 
