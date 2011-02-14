@@ -90,8 +90,12 @@ class Server
     {
         if (!empty($config))
         {
-            $this->config = array_merge(
+            $this->config = \array_merge(
                     $reset ? $this->configDefaults : $this->config, $config);
+        }
+
+        if (\is_callable($this->config["fork"])) {
+            $this->config["fork"] = $this->config["fork"]($this);
         }
 
         return $this->config;
