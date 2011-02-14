@@ -260,7 +260,7 @@ class Connection
     function parse()
     {
         $raw   = \http_parse_headers($this->input);
-        $lines = \explode(\PHP_EOL, \trim($this->input));
+        $lines = \explode("\r\n", \trim($this->input));
         
         if(!\array_key_exists('Request Method', $raw) ||
            !\array_key_exists('Request Url', $raw)    
