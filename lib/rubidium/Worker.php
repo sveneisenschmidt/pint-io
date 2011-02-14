@@ -239,8 +239,7 @@ class Worker
         }
         
         $this->requests++;
-
-        // read the connection and immediately respond with hello
+        
         $conn = new Connection($socket);
         $conn->write(array(
             200,
