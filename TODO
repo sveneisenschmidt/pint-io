@@ -1,6 +1,2 @@
-zuviel io!
-
-* in jedem worker alle 1ms socket_accept
-* daher alle ~1ms touch() auf ping-file
-
--> socket_select mit 1s timeout, dann socket_accept
+* Implement support for UNIX domain sockets
+* Make sure the worker's are killed if they timeout while shutting down

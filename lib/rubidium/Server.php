@@ -2,9 +2,19 @@
 
 namespace rubidium;
 
+/**
+ * Central Server Manager (Master)
+ *
+ * Boots application, forks workers, kills stale workers, etc.
+ */
 class Server
 {
-    protected $config, $configDefaults = array(
+    /**
+     * Configuration defaults
+     * 
+     * @var array
+     */
+    protected $configDefaults = array(
         "pid_file" => "tmp/rubidium.pid",
         "listen" => "tcp://127.0.0.1:3000",
         "socket_file" => "tmp/rubidium.sock",
@@ -17,13 +27,65 @@ class Server
         "after_fork" => null
     );
 
-    protected $env, $pid, $socket, $workers = array(), $shuttingDown = false;
+    /**
+     * Runtime configuration
+     *
+     * @var array
+     */
+    protected $config;
 
+    /**
+     * Runtime environment (e.g. development, test, or production)
+     * 
+     * @var string
+     */
+    protected $env;
+
+    /**
+     * Master process' PID
+     *
+     * @var int
+     */
+    protected $pid;
+
+    /**
+     * Shared listening socket
+     *
+     * @var resource
+     */
+    protected $socket;
+
+    /**
+     * Worker objects
+     *
+     * @var \rubidium\Worker
+     */
+    protected $workers = array();
+
+    /**
+     * Shutdown flag
+     *
+     * @var bool
+     */
+    protected $shuttingDown = false;
+
+    /**
+     * Constructor
+     *
+     * @param array $config
+     */
     function __construct(array $config = array())
     {
         $this->config($config, true);
     }
 
+    /**
+     * Getter/setter for runtime configuration
+     *
+     * @param array $config
+     * @param bool $reset
+     * @return array
+     */
     function config(array $config = array(), $reset = false)
     {
         if (!empty($config))
@@ -35,41 +97,66 @@ class Server
         return $this->config;
     }
 
+    /**
+     * Returns the runtime environment
+     *
+     * @return string
+     */
     function env()
     {
         return $this->env;
     }
 
+    /**
+     * Returns the master process' PID
+     *
+     * @return int
+     */
     function pid()
     {
         return $this->pid;
     }
 
+    /**
+     * Boots the server and starts listening
+     *
+     * @param string $env
+     * @return null
+     */
     function start($env)
     {
         $this->env = (string)$env;
         $this->pid = posix_getpid();
 
+        // flush output instantly after echo/print was called
         ob_implicit_flush();
 
+        // write PID file
         if (file_exists($this->config["pid_file"])) {
             throw new Exception($this->config["pid_file"] . " already exists.");
         }
         file_put_contents($this->config["pid_file"], $this->pid());
 
-        list($host, $port) = explode(":", $this->config["listen"]);
+        // create socket (only TCP/IP supported, yet)
         $this->socket = socket_create(AF_INET, SOCK_STREAM, getprotobyname("tcp"));
         socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1);
+        list($host, $port) = explode(":", $this->config["listen"]);
+        socket_bind($this->socket, $host, $port);
+
+        // cancel reads and writes after 250 microseconds
         socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 250));
         socket_set_option($this->socket, SOL_SOCKET, SO_SNDTIMEO, array("sec" => 0, "usec" => 250));
-        socket_bind($this->socket, $host, $port);
-        socket_set_nonblock($this->socket);
-        socket_listen($this->socket);
 
+        // enable non-blocking mode. socket_accept() returns immediately
+        socket_set_nonblock($this->socket);
+
+        // start listening
+        socket_listen($this->socket);
         echo "Listening on http://" . $this->config["listen"] . "\n";
 
         $this->forkWorkers();
 
+        // register CTRL+C and SIGTERM
         $t = $this;
         $callback = function($signo) use ($t) {
             $t->shutdown();
@@ -81,9 +168,16 @@ class Server
         die();
     }
 
+    /**
+     * Main loop
+     *
+     * Maintains workers or serves requests, depending on fork config
+     *
+     * @return void
+     */
     function loop()
     {
-        while (true)
+        while (!$this->shuttingDown())
         {
             if ($this->config["fork"])
             {
@@ -95,12 +189,12 @@ class Server
                 $this->workers[0]->serve();
             }
 
+            // look for STRG+C
             pcntl_signal_dispatch();
-            if ($this->shuttingDown())
-            {
-                break;
-            }
         }
+
+        // main loop finished, start shutting down
+
 
         if ($this->config["fork"])
         {
@@ -108,6 +202,7 @@ class Server
 
             foreach ($this->workers as $worker)
             {
+                // tell the workers to die
                 $worker->shutdown();
             }
 
@@ -117,22 +212,35 @@ class Server
                 {
                     if (!$worker->alive())
                     {
+                        // worker died, delete its ping file
                         unset($this->workers[$i]);
                     }
                     else
                     {
+                        // the worker will be KILLed by the kernel if we immediately exit.
+                        // we are graceful and let it finish its request
                         pcntl_waitpid($worker->pid(), $status, WNOHANG);
                     }
                 }
             }
         }
 
+        // clean up
         socket_close($this->socket);
         unlink($this->config["pid_file"]);
 
         echo "Good day to you.\n";
     }
 
+    /**
+     * Builds workers
+     *
+     * Initializes workers, amount depends on the value of the <tt>workers</tt>
+     * setting. If <tt>fork</tt> is disabled builds one worker and doesn't tell
+     * it to fork.
+     *
+     * @return void
+     */
     function forkWorkers()
     {
         $count = $this->config["fork"] ? $this->config["workers"] : 1;
@@ -147,6 +255,13 @@ class Server
         }
     }
 
+    /**
+     * Replaces stale workers
+     *
+     * @return void
+     *
+     * @todo the pcntl_wait() stuff is complete bollocks
+     */
     function maintainWorkers()
     {
         foreach ($this->workers as $worker)
@@ -157,6 +272,10 @@ class Server
             }
         }
 
+        // can SIGKILL fail?
+        // shouldn't we wait() for each worker to confirm being KILLed?
+        // how long does it take wait() to timeout?
+        // retry after timeout? exit the master?
         pcntl_wait($status, WNOHANG);
         foreach ($this->workers as $i => $worker)
         {
@@ -165,21 +284,41 @@ class Server
                 unset($this->workers[$i]);
             }
         }
+
+        // reindex workers
         $this->workers = array_values($this->workers);
 
+        // fork new workers
         $this->forkWorkers();
     }
 
+    /**
+     * Indicates if the main loop should shut down
+     *
+     * @return bool
+     */
     function shuttingDown()
     {
         return $this->shuttingDown;
     }
 
+    /**
+     * Tells the main loop to exit after its current cycle
+     *
+     * @return void
+     */
     function shutdown()
     {
         $this->shuttingDown = true;
     }
 
+    /**
+     * Builds a new instance from a config file
+     *
+     * @param string $file
+     * @return \rubidium\Server
+     * @throws \rubidium\Exception
+     */
     static function fromAppFile($file)
     {
         $config = require $file;
