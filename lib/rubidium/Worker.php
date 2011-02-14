@@ -226,8 +226,13 @@ class Worker
         $r = array($this->socket);
         $w = array();
         $x = array();
-        if (!socket_select($r, $w, $x, 1))
+        if (!@socket_select($r, $w, $x, 1))
         {
+            $error = \socket_last_error($this->socket);
+            if (!in_array($error, array(0, 4)))
+            {
+                echo "[pid=" . $this->pid() . "] socket_select error: [" . $error . "] " . \socket_strerror($error) . "\n";
+            }
             return;
         }
 
