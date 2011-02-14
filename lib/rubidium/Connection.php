@@ -163,6 +163,7 @@ class Connection
             if (!is_int($x))
             {
                 echo "[" . \posix_getpid() . "] write error: " . \socket_strerror(\socket_last_error($this->socket)) . "\n";
+                // we should seriously consider placing a "break;" here
             }
             else
             {
