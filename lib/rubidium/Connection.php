@@ -111,13 +111,14 @@ class Connection
     function read()
     {
         $this->input = "";
-        while ($chunk = \socket_read($this->socket, 1024,\ PHP_BINARY_READ))
+        while (substr($this->input, -4) !== "\r\n\r\n")
         {
+            $chunk = \socket_read($this->socket, 1024, \PHP_BINARY_READ);
+            if ($chunk === false)
+            {
+//                echo "[" . posix_getpid() . "] read error: " . socket_strerror(socket_last_error($this->socket)) . "\n";
+            }
             $this->input .= $chunk;
-        }
-        if ($chunk === false)
-        {
-//            echo "[" . posix_getpid() . "] read error: " . socket_strerror(socket_last_error($this->socket)) . "\n";
         }
     }
 
@@ -130,8 +131,22 @@ class Connection
      */
     function write(array $response, $start = null)
     {
+        // stringify body and set Content-Length
+        if (is_array($response[2]))
+        {
+            $response[2] = implode("\n", $response[2]);
+        }
+        else
+        {
+            $response[2] = (string)$response[2];
+        }
+        $response[1]["Content-Length"] = strlen($response[2]);
+
+        // keep-alive connections can be the knife in our back
+        $response[1]["Connection"] = "close";
+
         // response line
-        $str = "HTTP/{$this->version} {$response[0]} {$this->status[$response[0]]} \r\n";
+        $str = "HTTP/1.1 {$response[0]} {$this->status[$response[0]]} \r\n";
         
         // headers
         foreach ($response[1] as $key => $value)
@@ -141,19 +156,7 @@ class Connection
         $str .= "\r\n";
 
         // body
-        if (\is_string($response[2]))
-        {
-            $str .= $response[2] . "\r\n";
-        }
-        else
-        {
-            foreach ($response[2] as $line)
-            {
-                $str .= $line . "\r\n";
-            }
-        }
-
-        $str .= "\r\n";
+        $str .= $response[2];
 
         $bytes = \strlen($str);
         $written = 0;
@@ -163,7 +166,7 @@ class Connection
             if (!is_int($x))
             {
                 echo "[" . \posix_getpid() . "] write error: " . \socket_strerror(\socket_last_error($this->socket)) . "\n";
-                // we should seriously consider placing a "break;" here
+                break;
             }
             else
             {
