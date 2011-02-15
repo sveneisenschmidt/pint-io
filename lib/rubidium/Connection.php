@@ -122,6 +122,7 @@ class Connection
             if ($chunk === false)
             {
 //                echo "[" . posix_getpid() . "] read error: " . socket_strerror(socket_last_error($this->socket)) . "\n";
+                break;
             }
             $this->input .= $chunk;
         }
