@@ -126,8 +126,8 @@ class Socket
             throw new Exception('$length is no integer or numeric string!');
         }
         
-        $status = @\socket_recv($this->resource, $buffer, $length, $flags);
-        return ($status === false) ? false : $buffer;
+        @\socket_recv($this->resource, $buffer, $length, $flags);
+        return $buffer;
     }
 
     /**
