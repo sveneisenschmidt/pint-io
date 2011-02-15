@@ -411,9 +411,9 @@ class Server
     /**
      * Cleans everything up, even if the server dies
      *
-     * @param string $file
-     * @return \pint\Server
-     * @throws \pint\Exception
+     * @param \pint\Server $server
+     * @param array $dirs
+     * @return void
      */
     public static function cleanup(\pint\Server $server, array $dirs = array())
     {
