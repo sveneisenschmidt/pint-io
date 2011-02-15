@@ -127,17 +127,19 @@ class Connection
      * 
      * @param array $response
      * @param array $start
-     * @return string
+     * @return void
      */
     function write(array $response, $start = null)
     {
-        if (!is_resource($this->socket))
-        {
-            throw new Exception("Connection->write() failed because its socket is already closed.");
+        if (!\is_resource($this->socket) ||
+            !\socket_read($this->socket, 1)
+        ) {
+            // throw new Exception("Connection->write() failed because its socket is already closed.");
+            return;
         }
 
         // stringify body and set Content-Length
-        if (is_array($response[2]))
+        if (\is_array($response[2]))
         {
             $response[2] = implode("\n", $response[2]);
         }
@@ -145,7 +147,7 @@ class Connection
         {
             $response[2] = (string)$response[2];
         }
-        $response[1]["Content-Length"] = strlen($response[2]);
+        $response[1]["Content-Length"] = \strlen($response[2]);
 
         // keep-alive connections can be the knife in our back
         $response[1]["Connection"] = "close";
