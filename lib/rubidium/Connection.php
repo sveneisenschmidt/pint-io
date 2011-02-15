@@ -2,13 +2,13 @@
 
 namespace rubidium;
 
-use rubidium\Socket;
+use \rubidium\Socket;
 
 class Connection
 {
     /**
      *
-     * @var rubidium\Socket
+     * @var \rubidium\Socket
      */
     protected $socket = null;
     
@@ -123,7 +123,7 @@ class Connection
         $this->input = "";
         while (substr($this->input, -4) !== "\r\n\r\n")
         {
-            $chunk = \socket_read($this->socket, 1024, \PHP_BINARY_READ);
+            $chunk = $this->socket->read(1024);
             if ($chunk === false) {
                 break;
             }

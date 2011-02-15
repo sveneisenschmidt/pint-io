@@ -2,16 +2,15 @@
 
 namespace rubidium;
 
-use rubidium\Exception;
+use \rubidium\Exception;
 
 class Socket
 {
     /**
      *
-     * @var resource #id
+     * @var resource#id
      */
     protected $resource = null;
-    
     
     /**
      *
@@ -59,7 +58,7 @@ class Socket
      */
     public function resource()
     {
-        return $this->resource();
+        return $this->resource;
     }
     
     /**
@@ -121,7 +120,6 @@ class Socket
      * @param string $buffer
      * @param string $bytes 
      * @return int
-     * 
      */
     public function write($buffer, $length = null)
     {
@@ -130,6 +128,19 @@ class Socket
         }
         
         return (int) \socket_write($this->resource, $buffer, $length);
+    }
+    
+    
+    /**
+     * Binds the socket to a specific host and port
+     * 
+     * @param string $host
+     * @param string|int $port 
+     * @return boolean
+     */
+    public function bind($host = null, $port = null)
+    {
+        return \socket_bind($this->resource, $host, $port);
     }
     
     /**
@@ -176,5 +187,23 @@ class Socket
     {
         \socket_shutdown($this->resource);
         \socket_close($this->resource);
+    }
+
+    /**
+     *
+     * @return boolean
+     */
+    public function nonblock()
+    {
+        return \socket_set_nonblock($this->resource);
+    }
+
+    /**
+     *
+     * @return boolean
+     */
+    public function listen()
+    {
+        return \socket_listen($this->resource);
     }
 }

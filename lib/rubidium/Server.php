@@ -2,6 +2,8 @@
 
 namespace rubidium;
 
+use \rubidium\Socket;
+
 /**
  * Central Server Manager (Master)
  *
@@ -51,7 +53,7 @@ class Server
     /**
      * Shared listening socket
      *
-     * @var resource
+     * @var \rubidium\Socket
      */
     protected $socket;
 
@@ -163,25 +165,22 @@ class Server
             'tmp'
         ));
 
-        // boot application
-        $this->config["boot"]($this);
-
-        // create socket (only TCP/IP supported, yet)
-        $this->socket = \socket_create(AF_INET, SOCK_STREAM, getprotobyname("tcp"));
-        \socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1);
+        $this->config["boot"]($this);  // boot application
         list($host, $port) = \explode(":", $this->config["listen"]);
-        \socket_bind($this->socket, $host, $port);
 
-        // cancel reads and writes after 250 microseconds
-        \socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 250));
-        \socket_set_option($this->socket, SOL_SOCKET, SO_SNDTIMEO, array("sec" => 0, "usec" => 250));
-
-        // enable non-blocking mode. socket_accept() returns immediately
-        \socket_set_nonblock($this->socket);
-
-        // start listening
-        \socket_listen($this->socket);
+        
+        $this->socket = Socket::create(AF_INET, SOCK_STREAM, getprotobyname("tcp"));
+        $this->socket->options(array(
+            array(SOL_SOCKET, SO_REUSEADDR, 1),
+            array(SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 250)), // cancel reads and writes after 250 microseconds
+            array(SOL_SOCKET, SO_SNDTIMEO, array("sec" => 0, "usec" => 250))
+        ));
+        $this->socket->bind($host, $port);
+        $this->socket->nonblock(); // enable non-blocking mode. socket_accept() returns immediately
+        
         echo "Listening on http://" . $this->config["listen"] . "\n";
+        $this->socket->listen();
+
 
         $this->config["before_fork"]($this);
         $this->forkWorkers();
@@ -256,7 +255,7 @@ class Server
         }
 
         // clean up
-        socket_close($this->socket);
+        $this->socket->close();
         unlink($this->config["pid_file"]);
 
         echo "Good day to you.\n";
@@ -276,7 +275,7 @@ class Server
         $count = $this->config["fork"] ? $this->config["workers"] : 1;
         for ($i = count($this->workers); $i < $count; $i++)
         {
-            $worker = new Worker($this, $this->socket);
+            $worker = new Worker($this, $this->socket->resource());
             $this->workers []= $worker;
             if ($this->config["fork"]) {
                 $worker->fork();
