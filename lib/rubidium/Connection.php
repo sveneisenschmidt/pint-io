@@ -297,8 +297,8 @@ class Connection
 
         
         // content type is not allowed when performing get requests
-        if(\array_key_exists('Content-Type', $raw) &&
-           \in_array($this->method, array('DELETE', 'GET'))
+        if(array_key_exists('Content-Type', $raw) &&
+           !in_array($this->method, array('POST', 'PUT'))
         ) {
             return $this->criticizeSyntax();
         } 
