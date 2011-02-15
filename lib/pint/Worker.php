@@ -2,6 +2,10 @@
 
 namespace pint;
 
+use \pint\Connection,
+    \pint\Server,
+    \pint\Socket;
+
 /**
  * Request Processor (Worker)
  *
@@ -58,10 +62,10 @@ class Worker
      * Constructor
      *
      * @param \pint\Server $server
-     * @param resource $socket
+     * @param \pint\Socket $socket
      * @return void
      */
-    function __construct($server, $socket)
+    function __construct(\pint\Server $server, \pint\Socket $socket)
     {
         $this->server = $server;
         $this->socket = $socket;
@@ -222,28 +226,25 @@ class Worker
      */
     function serve()
     {
+        $msg = "[pid=%s] socket_select error: [%s] %s \n";
+        
         // see if a connection comes in
-        if (!$c = @socket_select($r = array($this->socket), $w = null, $x = null, 1))
-        {
-            if ($c === false)
-            {
+        if (!$c = @socket_select($r = array($this->socket->resource()), $w = null, $x = null, 1)) {
+            if ($c === false) {
                 $error = \socket_last_error();
-                if (!in_array($error, array(0, 4)))
-                {
-                    echo "[pid=" . $this->pid() . "] socket_select error: [" . $error . "] " . \socket_strerror($error) . "\n";
+                if (!in_array($error, array(0, 4))) {
+                    \vprintf($msg, array($this->pid(), $error, \socket_strerror($error)));
                 }
             }
             return;
         }
 
         // try to get it! go go go!
-        $socket = @socket_accept($this->socket);
-        if (!$socket)
-        {
-            if (is_null($socket))
-            {
+        $socket = @socket_accept($this->socket->resource());
+        if (!$socket) {
+            if (is_null($socket)) {
                 $error = \socket_last_error();
-                echo "[pid=" . $this->pid() . "] socket_select error: [" . $error . "] " . \socket_strerror($error) . "\n";
+                \vprintf($msg, array($this->pid(), $error, \socket_strerror($error)));
             }
             return;
         }

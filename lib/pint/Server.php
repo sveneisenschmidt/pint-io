@@ -2,7 +2,8 @@
 
 namespace pint;
 
-use \pint\Socket;
+use \pint\Socket,
+    \pint\Worker;
 
 /**
  * Central Server Manager (Master)
@@ -275,7 +276,7 @@ class Server
         $count = $this->config["fork"] ? $this->config["workers"] : 1;
         for ($i = count($this->workers); $i < $count; $i++)
         {
-            $worker = new Worker($this, $this->socket->resource());
+            $worker = new Worker($this, $this->socket);
             $this->workers []= $worker;
             if ($this->config["fork"]) {
                 $worker->fork();

@@ -2,6 +2,8 @@
 
 namespace pint\middleware;
 
+use pint\middleware\MiddlewareAbstract;
+
 class Logging extends MiddlewareAbstract
 {
     function call($env)
