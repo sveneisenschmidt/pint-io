@@ -2,8 +2,15 @@
 
 namespace rubidium;
 
+use rubidium\Socket;
+
 class Connection
 {
+    /**
+     *
+     * @var rubidium\Socket
+     */
+    protected $socket = null;
     
     /**
      *
@@ -83,17 +90,15 @@ class Connection
      */
     function __construct($socket)
     {
-        $this->socket = $socket;
-        \socket_set_option($this->socket, \SOL_SOCKET, \SO_RCVTIMEO, array("sec" => 0, "usec" => 250));
-        \socket_set_option($this->socket, \SOL_SOCKET, \SO_SNDTIMEO, array("sec" => 0, "usec" => 250));
+        
+        $this->socket = Socket::fromSocket($socket);
+        $this->socket->options(array(
+            array(\SOL_SOCKET, \SO_RCVTIMEO, array("sec" => 0, "usec" => 250)),
+            array(\SOL_SOCKET, \SO_SNDTIMEO, array("sec" => 0, "usec" => 250))
+        ));
         
         $this->read();
         $this->parse();
-        
-        
-        
-        print_r($this->env());
-        die();
     }
 
     /**
@@ -118,12 +123,7 @@ class Connection
         $this->input = "";
         while (substr($this->input, -4) !== "\r\n\r\n")
         {
-            $chunk = \socket_read($this->socket, 1024, \PHP_BINARY_READ);
-            if ($chunk === false)
-            {
-//                echo "[" . posix_getpid() . "] read error: " . socket_strerror(socket_last_error($this->socket)) . "\n";
-            }
-            $this->input .= $chunk;
+            $this->input .= (string) $this->socket->read(1024, \PHP_BINARY_READ);
         }
     }
 
@@ -136,58 +136,46 @@ class Connection
      */
     function write(array $response, $start = null)
     {
-        if (!\is_resource($this->socket) ||
-            !\socket_read($this->socket, 1)
-        ) {
+        if ($this->socket->isClosed()) {
             throw new Exception("Connection->write() failed because its socket is already closed.");
-            // @todo we should tets instead for environment and only throw the exception when we are not in production
-            // or create a error_flag for write exceptions when the socket is alread closed
-            // return;
         }
 
         // stringify body and set Content-Length
-        if (\is_array($response[2]))
-        {
+        if (\is_array($response[2])) {
             $response[2] = implode("\n", $response[2]);
-        }
-        else
-        {
+        } else {
             $response[2] = (string)$response[2];
         }
-        $response[1]["Content-Length"] = \strlen($response[2]);
-
-        // keep-alive connections can be the knife in our back
-        $response[1]["Connection"] = "close";
+        
+        $response[1] = array_merge($response[1], array(
+            'Content-Length' => \strlen($response[2]),
+            'Connection'     => 'close' // keep-alive connections can be the knife in our back
+        ));
 
         // response line
-        $str = "HTTP/1.1 {$response[0]} {$this->status[$response[0]]} \r\n";
+        $buffer = \vsprintf("HTTP/1.1 %s %s \r\n", array($response[0], $this->status[$response[0]]));
         
-        // headers
-        foreach ($response[1] as $key => $value)
-        {
-            $str .= $key . ": " . $value . "\r\n";
-        }
-        $str .= "\r\n";
-
-        // body
-        $str .= $response[2];
-
-        $bytes = \strlen($str);
+        \array_walk($response[1], function($value, $key) use ($buffer) {
+            $buffer .= \vsprintf("%s: %s \r\n", array($key, $value));
+        });
+        
+        $buffer .= \vsprintf("\r\n%s", array($response[2]));
+        $bytes   = \strlen($buffer);
         $written = 0;
+        
         while ($written < $bytes)
         {
-            $x = \socket_write($this->socket, $str, $bytes);
-            if (!is_int($x)) {
-                echo "[" . \posix_getpid() . "] write error: " . \socket_strerror(\socket_last_error($this->socket)) . "\n";
+            $x = $this->socket->write($buffer, $bytes);
+            if (!is_int($x) || $x === false) {
+                echo "[{$this->pid()}] write error: {$this->socket->getLastErrorMessege()} \n";
                 break;
             } else {
                 $written += $x;
             }
         }
 
-        \socket_set_option($this->socket, \SOL_SOCKET, \SO_LINGER, array("l_onoff" => 1, "l_linger" => 1));
-        \socket_shutdown($this->socket);
-        \socket_close($this->socket);
+        $this->socket->option(\SOL_SOCKET, \SO_LINGER, array("l_onoff" => 1, "l_linger" => 1));
+        $this->socket->close();
     }
 
     /**
@@ -215,6 +203,15 @@ class Connection
     function version()
     {
         return $this->version;
+    }
+
+    /**
+     *
+     * @return int
+     */
+    function pid()
+    {
+        return \posix_getpid();
     }
 
 
@@ -247,7 +244,7 @@ class Connection
             $env["HTTP_" . \strtoupper($key)] = $value;
         }
         return \array_merge($env, array(
-            "HTTP_VERSION" => "HTTP/" . $this->version
+            "HTTP_VERSION" => "HTTP/" . $this->version()
         ));
     }
     

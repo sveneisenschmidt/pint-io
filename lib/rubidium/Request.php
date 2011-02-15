@@ -2,7 +2,7 @@
 
 namespace rubidium;
 
-class Request
+class Request implements \ArrayAccess
 {
     protected $env;
 
