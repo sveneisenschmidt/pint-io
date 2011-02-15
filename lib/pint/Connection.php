@@ -1,14 +1,14 @@
 <?php
 
-namespace rubidium;
+namespace pint;
 
-use \rubidium\Socket;
+use \pint\Socket;
 
 class Connection
 {
     /**
      *
-     * @var \rubidium\Socket
+     * @var \pint\Socket
      */
     protected $socket = null;
     
@@ -170,7 +170,7 @@ class Connection
         while ($written < $bytes)
         {
             $x = $this->socket->write($buffer, $bytes);
-            if (!is_int($x) || $x === false) {
+            if (!is_int($x)) {
                 echo "[{$this->pid()}] write error: {$this->socket->getLastErrorMessege()} \n";
                 break;
             } else {
@@ -237,9 +237,9 @@ class Connection
         $env = array(
             "REQUEST_METHOD" => $this->method(),
             "REQUEST_URI" => $this->uri(),
-            "SERVER_SOFTWARE" => "rubidium/0.0.0",
+            "SERVER_SOFTWARE" => "pint/0.0.0",
             "SERVER_PROTOCOL" => "HTTP/1.1",
-            "SERVER_NAME" => "rubidium.org",
+            "SERVER_NAME" => "pint.io",
             "SERVER_PORT" => "3000"
         );
         foreach ($this->headers() as $key => $value)

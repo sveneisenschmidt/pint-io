@@ -2,8 +2,8 @@
 
 return array(
     "listen" => "127.0.0.1:3000",
-    "socket_file" => "tmp/rubidium.sock",
-    "pid_file" => "tmp/rubidium.pid",
+    "socket_file" => "tmp/pint.sock",
+    "pid_file" => "tmp/pint.pid",
     "fork" => false,
 //    "fork" => function($server) {
 //        echo "Shall I fork?\n";
@@ -16,7 +16,7 @@ return array(
         $loader->register();
 
         // both accept a string, object or closure
-        $server->middleware("rubidium\middleware\Logging");
+        $server->middleware("pint\middleware\Logging");
         $server->app("example\App");
     },
     "before_fork" => function($server) {

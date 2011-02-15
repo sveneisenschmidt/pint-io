@@ -1,12 +1,12 @@
 #!/usr/bin/env php
 <?php
 
-namespace rubidium;
+namespace pint;
 
 $path = dirname(dirname(__FILE__));
 require "$path/lib/SplClassLoader.php";
 
-$loader = new \SplClassLoader("rubidium", "$path/lib");
+$loader = new \SplClassLoader("pint", "$path/lib");
 $loader->register();
 
 $file = isset($_SERVER["argv"][1]) ? realpath($_SERVER["argv"][1]) : null;
@@ -16,8 +16,8 @@ if (empty($file))
 }
 $server = Server::fromAppFile($file);
 
-if (!isset($_ENV["RUBIDIUM_ENV"]) || empty($_ENV["RUBIDIUM_ENV"]))
+if (!isset($_ENV["PINT_ENV"]) || empty($_ENV["PINT_ENV"]))
 {
-    $_ENV["RUBIDIUM_ENV"] = "development";
+    $_ENV["PINT_ENV"] = "development";
 }
-$server->start($_ENV["RUBIDIUM_ENV"]);
+$server->start($_ENV["PINT_ENV"]);

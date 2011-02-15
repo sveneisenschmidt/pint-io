@@ -1,6 +1,6 @@
 <?php
 
-namespace rubidium;
+namespace pint;
 
 class App
 {
@@ -34,6 +34,6 @@ class App
 
     function process()
     {
-        $this->response->write("Hi, I'm rubidium!");
+        $this->response->write("Hi, I'm pint!");
     }
 }

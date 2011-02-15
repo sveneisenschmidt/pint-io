@@ -1,6 +1,6 @@
 <?php
 
-namespace rubidium\middleware;
+namespace pint\middleware;
 
 class Logging extends MiddlewareAbstract
 {

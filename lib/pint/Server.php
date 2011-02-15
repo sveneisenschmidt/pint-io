@@ -1,8 +1,8 @@
 <?php
 
-namespace rubidium;
+namespace pint;
 
-use \rubidium\Socket;
+use \pint\Socket;
 
 /**
  * Central Server Manager (Master)
@@ -17,9 +17,9 @@ class Server
      * @var array
      */
     protected $configDefaults = array(
-        "pid_file" => "tmp/rubidium.pid",
+        "pid_file" => "tmp/pint.pid",
         "listen" => "tcp://127.0.0.1:3000",
-        "socket_file" => "tmp/rubidium.sock",
+        "socket_file" => "tmp/pint.sock",
         "fork" => false,
         "workers" => 4,
         "max_requests" => -1,
@@ -53,14 +53,14 @@ class Server
     /**
      * Shared listening socket
      *
-     * @var \rubidium\Socket
+     * @var \pint\Socket
      */
     protected $socket;
 
     /**
      * Worker objects
      *
-     * @var \rubidium\Worker
+     * @var \pint\Worker
      */
     protected $workers = array();
 
@@ -161,7 +161,7 @@ class Server
         }
         \file_put_contents($this->config["pid_file"], $this->pid());
         
-        \register_shutdown_function(array('\rubidium\Server', 'cleanup'), $this, array(
+        \register_shutdown_function(array('\pint\Server', 'cleanup'), $this, array(
             'tmp'
         ));
 
@@ -394,8 +394,8 @@ class Server
      * Builds a new instance from a config file
      *
      * @param string $file
-     * @return \rubidium\Server
-     * @throws \rubidium\Exception
+     * @return \pint\Server
+     * @throws \pint\Exception
      */
     public static function fromAppFile($file)
     {
@@ -411,10 +411,10 @@ class Server
      * Cleans everything up, even if the server dies
      *
      * @param string $file
-     * @return \rubidium\Server
-     * @throws \rubidium\Exception
+     * @return \pint\Server
+     * @throws \pint\Exception
      */
-    public static function cleanup(\rubidium\Server $server, array $dirs = array())
+    public static function cleanup(\pint\Server $server, array $dirs = array())
     {
         foreach($dirs as $path) {
             $pattern = $path . \DIRECTORY_SEPARATOR .'*';

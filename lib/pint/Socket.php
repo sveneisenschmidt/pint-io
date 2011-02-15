@@ -1,8 +1,8 @@
 <?php
 
-namespace rubidium;
+namespace pint;
 
-use \rubidium\Exception;
+use \pint\Exception;
 
 class Socket
 {
@@ -27,7 +27,7 @@ class Socket
     
     /**
      * 
-     * Creates a new rubidium\Socket instance with an already intialized socket
+     * Creates a new pint\Socket instance with an already intialized socket
      *
      * @param resource $socket 
      * @return void
@@ -127,7 +127,7 @@ class Socket
             throw new Exception('$bytes is no integer or numeric string!');
         }
         
-        return (int) \socket_write($this->resource, $buffer, $length);
+        return \socket_write($this->resource, $buffer, $length);
     }
     
     

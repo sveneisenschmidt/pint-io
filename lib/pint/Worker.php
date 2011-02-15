@@ -1,6 +1,6 @@
 <?php
 
-namespace rubidium;
+namespace pint;
 
 /**
  * Request Processor (Worker)
@@ -13,7 +13,7 @@ class Worker
     /**
      * Master
      *
-     * @var \rubidium\Server
+     * @var \pint\Server
      */
     protected $server;
 
@@ -57,7 +57,7 @@ class Worker
     /**
      * Constructor
      *
-     * @param \rubidium\Server $server
+     * @param \pint\Server $server
      * @param resource $socket
      * @return void
      */
@@ -70,7 +70,7 @@ class Worker
     /**
      * Returns the master object
      *
-     * @return \rubidium\Server
+     * @return \pint\Server
      */
     function server()
     {
@@ -103,7 +103,7 @@ class Worker
      * Afterwards <tt>forked()</tt> will indicate if we're inside the worker.
      *
      * @return void
-     * @throws \rubidium\Exception
+     * @throws \pint\Exception
      */
     function fork()
     {
@@ -111,7 +111,7 @@ class Worker
         if ($pid === false)
         {
             // this can happen on windows, e.g.
-            throw new Exception("rubidium was unable to fork.");
+            throw new Exception("pint was unable to fork.");
         }
 
         $this->forked = $pid == 0;

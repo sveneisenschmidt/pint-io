@@ -1,6 +1,6 @@
 <?php
 
-namespace rubidium\middleware;
+namespace pint\middleware;
 
 class MiddlewareAbstract
 {
@@ -28,7 +28,7 @@ class MiddlewareAbstract
 
     function call(array $env)
     {
-        $env["rubidium"]["errors"] []= get_class() . " is missing a call() method.";
+        $env["pint"]["errors"] []= get_class() . " is missing a call() method.";
 
         return array(
             500,

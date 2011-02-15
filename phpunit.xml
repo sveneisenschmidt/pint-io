@@ -4,8 +4,8 @@
     bootstrap="tests/bootstrap.php"
 >
     <testsuites>
-        <!--testsuite name="rubidium">
-            <directory>tests/rubidium</directory>
+        <!--testsuite name="pint">
+            <directory>tests/pint</directory>
         </testsuite-->
         <testsuite name="example">
             <directory>tests/example</directory>
