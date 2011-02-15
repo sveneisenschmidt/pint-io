@@ -223,10 +223,7 @@ class Worker
     function serve()
     {
         // see if a connection comes in
-        $r = array($this->socket);
-        $w = array();
-        $x = array();
-        if (!$c = @socket_select($r, $w, $x, 1))
+        if (!$c = @socket_select($r = array($this->socket), $w = null, $x = null, 1))
         {
             if ($c === false)
             {
@@ -243,6 +240,11 @@ class Worker
         $socket = @socket_accept($this->socket);
         if (!$socket)
         {
+            if (is_null($socket))
+            {
+                $error = \socket_last_error();
+                echo "[pid=" . $this->pid() . "] socket_select error: [" . $error . "] " . \socket_strerror($error) . "\n";
+            }
             return;
         }
         
