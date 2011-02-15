@@ -123,7 +123,11 @@ class Connection
         $this->input = "";
         while (substr($this->input, -4) !== "\r\n\r\n")
         {
-            $this->input .= (string) $this->socket->read(1024, \PHP_BINARY_READ);
+            $chunk = \socket_read($this->socket, 1024, \PHP_BINARY_READ);
+            if ($chunk === false) {
+                break;
+            }
+            $this->input .= $chunk;
         }
     }
 
