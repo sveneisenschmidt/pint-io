@@ -417,7 +417,6 @@ class Server
      */
     public static function cleanup(\rubidium\Server $server, array $dirs = array())
     {
-        $files = array();
         foreach($dirs as $path) {
             $pattern = $path . \DIRECTORY_SEPARATOR .'*';
             foreach(\glob($pattern) as $file) {
