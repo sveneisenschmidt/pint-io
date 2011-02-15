@@ -89,6 +89,11 @@ class Connection
         
         $this->read();
         $this->parse();
+        
+        
+        
+        print_r($this->env());
+        die();
     }
 
     /**
@@ -172,13 +177,10 @@ class Connection
         while ($written < $bytes)
         {
             $x = \socket_write($this->socket, $str, $bytes);
-            if (!is_int($x))
-            {
+            if (!is_int($x)) {
                 echo "[" . \posix_getpid() . "] write error: " . \socket_strerror(\socket_last_error($this->socket)) . "\n";
                 break;
-            }
-            else
-            {
+            } else {
                 $written += $x;
             }
         }
@@ -296,15 +298,10 @@ class Connection
         
         // content type is not allowed when performing get requests
         if(\array_key_exists('Content-Type', $raw) &&
-           \in_array($this->method, array('POST', 'GET'))
+           \in_array($this->method, array('DELETE', 'GET'))
         ) {
             return $this->criticizeSyntax();
         } 
-      
-        
-        
-        
-        
         
         
         // application/x-www-url-encoded; charset=UTF-8
