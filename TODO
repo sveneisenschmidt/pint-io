@@ -4,4 +4,5 @@
   server bekommt ein ram limit, und muss sich vergewissern bei jeder request annahme
   ob die content length des request (POST/PUT) das speicherlimit überschreitet
   vorschlag lars: master killt worker sobald sie mehr als x mb ram verbrauchen
+  sven: stimme überein
 * Connection->write should set the Content-Length header

@@ -134,8 +134,10 @@ class Connection
         if (!\is_resource($this->socket) ||
             !\socket_read($this->socket, 1)
         ) {
-            // throw new Exception("Connection->write() failed because its socket is already closed.");
-            return;
+            throw new Exception("Connection->write() failed because its socket is already closed.");
+            // @todo we should tets instead for environment and only throw the exception when we are not in production
+            // or create a error_flag for write exceptions when the socket is alread closed
+            // return;
         }
 
         // stringify body and set Content-Length
