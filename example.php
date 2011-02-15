@@ -9,8 +9,8 @@ return array(
 //        echo "Shall I fork?\n";
 //        return $server->env() != "development";
 //    },
-    "workers" => 1,
-    "max_requests" => 1,
+    "workers" => 8,
+    "max_requests" => 0,
     "boot" => function($server) {
         $loader = new \SplClassLoader("example", "lib");
         $loader->register();

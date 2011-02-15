@@ -149,7 +149,7 @@ class Socket
      */
     public function isClosed()
     {
-        return (bool)$this->read(1);
+        return !\is_resource($this->resource);
     }
     
     /**
