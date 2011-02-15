@@ -118,7 +118,7 @@ class Worker
             throw new Exception("pint was unable to fork.");
         }
 
-        $this->forked = $pid == 0;
+        $this->forked = ($pid == 0);
         if ($this->forked)
         {
             // we're inside the worker
@@ -227,11 +227,12 @@ class Worker
     function serve()
     {
         $msg = "[pid=%s] socket_select error: [%s] %s \n";
+        $resource = $this->socket->resource();
         
         // see if a connection comes in
-        if (!$c = @socket_select($r = array($this->socket->resource()), $w = null, $x = null, 1)) {
+        if (!$c = @socket_select($r = array($resource), $w = null, $x = null, 1)) {
             if ($c === false) {
-                $error = \socket_last_error();
+                $error = \socket_last_error($resource);
                 if (!in_array($error, array(0, 4))) {
                     \vprintf($msg, array($this->pid(), $error, \socket_strerror($error)));
                 }
@@ -240,7 +241,7 @@ class Worker
         }
 
         // try to get it! go go go!
-        $socket = @socket_accept($this->socket->resource());
+        $socket = @socket_accept($resource);
         if (!$socket) {
             if (is_null($socket)) {
                 $error = \socket_last_error();

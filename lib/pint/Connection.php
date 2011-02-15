@@ -92,12 +92,14 @@ class Connection
     function __construct($socket)
     {
         if(\is_resource($socket)) {
-            $this->socket = Socket::fromSocket($socket);
-        } else
-        if(!(\is_object($socket) && $socket instanceof \rubidium\Socket)) {
-            throw new Exception('$socket is no resource or instance of \rubidium\Socket!');
+            $socket = Socket::fromSocket($socket);
         }
         
+        if(!\is_object($socket) && !($socket instanceof \pint\Socket)) {
+            throw new Exception('$socket is no resource or instance of \pint\Socket!');
+        }
+        
+        $this->socket = $socket;
         $this->socket->options(array(
             array(\SOL_SOCKET, \SO_RCVTIMEO, array("sec" => 0, "usec" => 250)),
             array(\SOL_SOCKET, \SO_SNDTIMEO, array("sec" => 0, "usec" => 250))
@@ -147,7 +149,8 @@ class Connection
     function write(array $response, $start = null)
     {
         if ($this->socket->isClosed()) {
-            throw new Exception("Connection->write() failed because its socket is already closed.");
+            // throw new Exception("Connection->write() failed because its socket is already closed.");
+            return;
         }
 
         // stringify body and set Content-Length
