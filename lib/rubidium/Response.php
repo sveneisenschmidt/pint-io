@@ -41,4 +41,14 @@ class Response
 
         return $this->body;
     }
+
+    function write($line)
+    {
+        $this->body []= $line;
+    }
+
+    function finish()
+    {
+        return array($this->status, $this->headers, $this->body());
+    }
 }

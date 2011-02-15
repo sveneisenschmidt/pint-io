@@ -70,12 +70,30 @@ class Server
     protected $shuttingDown = false;
 
     /**
+     * Middleware stack
+     *
+     * @var array
+     */
+    protected $middleware = array();
+
+    /**
+     *
+     * @var mixed
+     */
+    protected $app;
+
+    protected $stack;
+
+    /**
      * Constructor
      *
      * @param array $config
      */
     function __construct(array $config = array())
     {
+        $this->configDefaults["boot"] = function($server) {};
+        $this->configDefaults["before_fork"] = function($server) {};
+        $this->configDefaults["after_fork"] = function($server, $worker) {};
         $this->config($config, true);
     }
 
@@ -130,34 +148,38 @@ class Server
     function start($env)
     {
         $this->env = (string)$env;
-        $this->pid = posix_getpid();
+        $this->pid = \posix_getpid();
 
         // flush output instantly after echo/print was called
-        ob_implicit_flush();
+        \ob_implicit_flush();
 
         // write PID file
-        if (file_exists($this->config["pid_file"])) {
+        if (\file_exists($this->config["pid_file"])) {
             throw new Exception($this->config["pid_file"] . " already exists.");
         }
-        file_put_contents($this->config["pid_file"], $this->pid());
+        \file_put_contents($this->config["pid_file"], $this->pid());
+
+        // boot application
+        $this->config["boot"]($this);
 
         // create socket (only TCP/IP supported, yet)
-        $this->socket = socket_create(AF_INET, SOCK_STREAM, getprotobyname("tcp"));
-        socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1);
-        list($host, $port) = explode(":", $this->config["listen"]);
-        socket_bind($this->socket, $host, $port);
+        $this->socket = \socket_create(AF_INET, SOCK_STREAM, getprotobyname("tcp"));
+        \socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1);
+        list($host, $port) = \explode(":", $this->config["listen"]);
+        \socket_bind($this->socket, $host, $port);
 
         // cancel reads and writes after 250 microseconds
-        socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 250));
-        socket_set_option($this->socket, SOL_SOCKET, SO_SNDTIMEO, array("sec" => 0, "usec" => 250));
+        \socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 250));
+        \socket_set_option($this->socket, SOL_SOCKET, SO_SNDTIMEO, array("sec" => 0, "usec" => 250));
 
         // enable non-blocking mode. socket_accept() returns immediately
-        socket_set_nonblock($this->socket);
+        \socket_set_nonblock($this->socket);
 
         // start listening
-        socket_listen($this->socket);
+        \socket_listen($this->socket);
         echo "Listening on http://" . $this->config["listen"] . "\n";
 
+        $this->config["before_fork"]($this);
         $this->forkWorkers();
 
         // register CTRL+C and SIGTERM
@@ -165,8 +187,8 @@ class Server
         $callback = function($signo) use ($t) {
             $t->shutdown();
         };
-        pcntl_signal(SIGTERM, $callback);
-        pcntl_signal(SIGINT, $callback);
+        \pcntl_signal(SIGTERM, $callback);
+        \pcntl_signal(SIGINT, $callback);
 
         $this->loop();
         die();
@@ -254,7 +276,7 @@ class Server
             $this->workers []= $worker;
             if ($this->config["fork"]) {
                 $worker->fork();
-                echo "Forked worker (pid=" . $worker->pid() . ")\n";
+                $this->config["after_fork"]($this, $worker);
             }
         }
     }
@@ -314,6 +336,55 @@ class Server
     function shutdown()
     {
         $this->shuttingDown = true;
+    }
+
+    function middleware($mw = null, array $options = array())
+    {
+        if (!is_null($mw))
+        {
+            $this->middleware []= array($mw, $options);
+        }
+
+        return $this->middleware;
+    }
+
+    function app($app = null)
+    {
+        if (!is_null($app))
+        {
+            $this->app = $app;
+        }
+
+        return $this->app;
+    }
+
+    function stack()
+    {
+        if (!$this->stack)
+        {
+            $app = $this->buildCallable($this->app);
+            foreach ($this->middleware() as $mw)
+            {
+                $outer = $this->buildCallable($mw[0], $mw[1]);
+                $outer->app($app);
+                $app = $outer;
+            }
+
+            $this->stack = $app;
+        }
+
+        return $this->stack;
+    }
+
+    function buildCallable($src, $options = null)
+    {
+        $obj = is_object($src) ? $src : new $src($options);
+        if (!method_exists($obj, "call"))
+        {
+            throw new Exception(get_class($obj) . " does not have a call() method.");
+        }
+
+        return $obj;
     }
 
     /**

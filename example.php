@@ -4,23 +4,25 @@ return array(
     "listen" => "127.0.0.1:3000",
     "socket_file" => "tmp/rubidium.sock",
     "pid_file" => "tmp/rubidium.pid",
-    "fork" => true,
+    "fork" => false,
 //    "fork" => function($server) {
+//        echo "Shall I fork?\n";
 //        return $server->env() != "development";
 //    },
     "workers" => 1,
     "max_requests" => 1,
     "boot" => function($server) {
-        $loader = new SplClassLoader("example", "lib");
+        $loader = new \SplClassLoader("example", "lib");
         $loader->register();
 
-        $server->use("rubidium\Logging");
-        $server->run("example\App");
+        // both accept a string, object or closure
+        $server->middleware("rubidium\middleware\Logging");
+        $server->app("example\App");
     },
-    "before_fork" => function($worker) {
-        echo "[master] Forking worker (pid=" . $worker->pid() . ")";
+    "before_fork" => function($server) {
+        echo "[master] Forking workers\n";
     },
-    "after_fork" => function($worker) {
-        echo "[pid=" . $worker->pid() . "] Forked worker";
+    "after_fork" => function($server, $worker) {
+        echo "[pid=" . $worker->pid() . "] Forked worker\n";
     }
 );

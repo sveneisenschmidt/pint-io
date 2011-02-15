@@ -250,12 +250,9 @@ class Worker
         
         $this->requests++;
         
-        $conn = new Connection($socket);
-        $conn->write(array(
-            200,
-            array("Content-Type" => "text/plain", "Content-Length" => 12),
-            "Hello World!"
-        ));
+        $con = new Connection($socket);
+        $response = $this->server()->stack()->call($con->env());
+        $con->write($response);
 
         // die if we reached the request limit
         $config = $this->server->config();

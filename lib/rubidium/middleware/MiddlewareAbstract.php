@@ -4,21 +4,26 @@ namespace rubidium\middleware;
 
 class MiddlewareAbstract
 {
-    protected $app;
+    protected $options, $app;
 
-    function __construct($app = null)
+    function __construct($options = array())
     {
-        $this->app($app);
+        $this->options = $options;
+    }
+
+    function options()
+    {
+        return $this->options;
     }
 
     function app($app = null)
     {
-        if (!is_null($this->app))
+        if (!is_null($app))
         {
             $this->app = $app;
         }
 
-        return $this->app();
+        return $this->app;
     }
 
     function call(array $env)

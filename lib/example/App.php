@@ -8,7 +8,7 @@ class App {
         return array(
             200,
             array("Content-Type" => "text/html"),
-            "You asked for " . $env["PATH_INFO"]
+            "You asked for " . $env["REQUEST_URI"]
         );
     }
 }

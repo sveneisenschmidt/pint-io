@@ -131,6 +131,11 @@ class Connection
      */
     function write(array $response, $start = null)
     {
+        if (!is_resource($this->socket))
+        {
+            throw new Exception("Connection->write() failed because its socket is already closed.");
+        }
+
         // stringify body and set Content-Length
         if (is_array($response[2]))
         {
@@ -175,6 +180,7 @@ class Connection
         }
 
         \socket_set_option($this->socket, \SOL_SOCKET, \SO_LINGER, array("l_onoff" => 1, "l_linger" => 1));
+        \socket_shutdown($this->socket);
         \socket_close($this->socket);
     }
 

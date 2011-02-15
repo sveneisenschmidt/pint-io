@@ -6,11 +6,15 @@ class App
 {
     protected $env, $request, $response;
 
-    function __construct(array $env)
+    function call(array $env)
     {
         $this->env = $env;
         $this->request = new Request($this->env);
         $this->response = new Response();
+
+        $this->process();
+
+        return $this->response->finish();
     }
 
     function env()
@@ -31,12 +35,5 @@ class App
     function process()
     {
         $this->response->write("Hi, I'm rubidium!");
-    }
-
-    static function call(array $env)
-    {
-        $app = new static($env);
-        $app->process();
-        return $app->response()->finish();
     }
 }
