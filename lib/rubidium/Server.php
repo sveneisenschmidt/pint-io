@@ -158,6 +158,10 @@ class Server
             throw new Exception($this->config["pid_file"] . " already exists.");
         }
         \file_put_contents($this->config["pid_file"], $this->pid());
+        
+        \register_shutdown_function(array('\rubidium\Server', 'cleanup'), $this, array(
+            'tmp'
+        ));
 
         // boot application
         $this->config["boot"]($this);
@@ -394,7 +398,7 @@ class Server
      * @return \rubidium\Server
      * @throws \rubidium\Exception
      */
-    static function fromAppFile($file)
+    public static function fromAppFile($file)
     {
         $config = require $file;
         if (!is_array($config))
@@ -402,5 +406,23 @@ class Server
             throw new Exception("Could not find a config in $file");
         }
         return new self($config);
+    }
+
+    /**
+     * Cleans everything up, even if the server dies
+     *
+     * @param string $file
+     * @return \rubidium\Server
+     * @throws \rubidium\Exception
+     */
+    public static function cleanup(\rubidium\Server $server, array $dirs = array())
+    {
+        $files = array();
+        foreach($dirs as $path) {
+            $pattern = $path . \DIRECTORY_SEPARATOR .'*';
+            foreach(\glob($pattern) as $file) {
+                unlink($file);
+            }
+        }
     }
 }
