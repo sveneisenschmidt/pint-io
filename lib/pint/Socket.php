@@ -200,7 +200,6 @@ class Socket
      */
     public function close()
     {
-        \socket_shutdown($this->resource);
         \socket_close($this->resource);
     }
 
