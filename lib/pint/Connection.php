@@ -2,7 +2,8 @@
 
 namespace pint;
 
-use \pint\Socket,
+use \pint\Request,
+    \pint\Socket,
     \pint\Exception;
 
 class Connection
@@ -36,11 +37,7 @@ class Connection
      * @var string
      */
     protected $version = null;
-    
-    /**
-     *
-     * @var array
-     */
+
     protected $status = array(
         100 => "Continue",
         101 => "Switching Protocols",
@@ -83,7 +80,7 @@ class Connection
         504 => "Gateway Timeout",
         505 => "HTTP Version Not Supported"
     );
-
+    
     /**
      * 
      * @param resource $socket
@@ -107,6 +104,7 @@ class Connection
         
         $this->read();
         $this->parse();
+        $this->request = Request::parse($this);
     }
 
     /**
@@ -195,6 +193,15 @@ class Connection
      *
      * @return string
      */
+    public function input()
+    {
+        return trim($this->input);
+    }
+
+    /**
+     *
+     * @return string
+     */
     function method()
     {
         return $this->method;
@@ -261,22 +268,7 @@ class Connection
         ));
     }
     
-    /*
-    Array
-    (
-        [Request Method] => GET
-        [Request Url] => /
-        [Host] => localhost:3000
-        [User-Agent] => Mozilla/5.0 (X11; Linux i686; rv:2.0b11) Gecko/20100101 Firefox/4.0b11
-        [Accept] => text/html,application/xhtml+xml,application/xml;q=0.9,* / *;q=0.8
-        [Accept-Language] => de-de,de;q=0.8,en-us;q=0.5,en;q=0.3
-        [Accept-Encoding] => gzip, deflate
-        [Accept-Charset] => ISO-8859-1,utf-8;q=0.7,*;q=0.7
-        [Keep-Alive] => 115
-        [Connection] => keep-alive
-        [Cache-Control] => max-age=0
-    )
-     */
+
     
     /**
      * 
@@ -284,9 +276,6 @@ class Connection
      */
     function parse()
     {
-        if(trim($this->input) == "") {
-            throw new Exception('empty request');
-        }
         
         
         $raw   = \http_parse_headers($this->input);
