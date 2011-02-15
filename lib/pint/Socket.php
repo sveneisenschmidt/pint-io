@@ -117,6 +117,21 @@ class Socket
     
     /**
      *
+     * @param int|string $length
+     * @return false|string
+     */
+    public function receive($length, $flags = MSG_WAITALL) 
+    {
+        if(!\is_numeric($length)) {
+            throw new Exception('$length is no integer or numeric string!');
+        }
+        
+        @\socket_recv($this->resource, $buffer, $length, $flags);
+        return $buffer;
+    }
+
+    /**
+     *
      * @param string $buffer
      * @param string $bytes 
      * @return int

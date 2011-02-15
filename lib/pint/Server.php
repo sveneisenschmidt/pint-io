@@ -257,7 +257,7 @@ class Server
 
         // clean up
         $this->socket->close();
-        unlink($this->config["pid_file"]);
+        @unlink($this->config["pid_file"]);
 
         echo "Good day to you.\n";
     }
@@ -420,7 +420,7 @@ class Server
         foreach($dirs as $path) {
             $pattern = $path . \DIRECTORY_SEPARATOR .'*';
             foreach(\glob($pattern) as $file) {
-                unlink($file);
+                @unlink($file);
             }
         }
     }

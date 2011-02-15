@@ -24,7 +24,7 @@ class Worker
     /**
      * Shared socket
      *
-     * @var resource
+     * @var \pint\Socket
      */
     protected $socket;
 
@@ -139,7 +139,7 @@ class Worker
             $this->loop();
 
             // the main loop ended, die
-            unlink($this->pingFile());
+            @unlink($this->pingFile());
             die();
         } else {
             // we're inside the master

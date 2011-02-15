@@ -131,7 +131,7 @@ class Connection
         $this->input = "";
         while (substr($this->input, -4) !== "\r\n\r\n")
         {
-            $chunk = $this->socket->read(1024);
+            $chunk = $this->socket->receive(1024);
             if ($chunk === false) {
                 break;
             }
@@ -166,10 +166,10 @@ class Connection
         ));
 
         // response line
-        $buffer = \vsprintf("HTTP/1.1 %s %s \r\n", array($response[0], $this->status[$response[0]]));
+        $buffer = \vsprintf("HTTP/1.1 %s %s\r\n", array($response[0], $this->status[$response[0]]));
         
         \array_walk($response[1], function($value, $key) use ($buffer) {
-            $buffer .= \vsprintf("%s: %s \r\n", array($key, $value));
+            $buffer .= \vsprintf("%s: %s\r\n", array($key, $value));
         });
         
         $buffer .= \vsprintf("\r\n%s", array($response[2]));
@@ -180,7 +180,7 @@ class Connection
         {
             $x = $this->socket->write($buffer, $bytes);
             if (!is_int($x)) {
-                echo "[{$this->pid()}] write error: {$this->socket->getLastErrorMessege()} \n";
+                echo "[{$this->pid()}] write error: {$this->socket->getLastErrorMessege()}\n";
                 break;
             } else {
                 $written += $x;
@@ -284,6 +284,11 @@ class Connection
      */
     function parse()
     {
+        if(trim($this->input) == "") {
+            throw new Exception('empty request');
+        }
+        
+        
         $raw   = \http_parse_headers($this->input);
         $lines = \explode("\r\n", \trim($this->input));
         
