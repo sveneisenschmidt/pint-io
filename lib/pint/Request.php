@@ -144,10 +144,11 @@ class Request implements \ArrayAccess
             return false;
         }
         
-        $request->offsetSet('headers', $raw);
         $request->offsetSet('method',  $raw['Request Method']);
         $request->offsetSet('uri',     $raw['Request Url']);
         
+        unset($raw['Request Method'], $raw['Request Url']);
+        $request->offsetSet('headers', $raw);
         return true;
     }
     

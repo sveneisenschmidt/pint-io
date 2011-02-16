@@ -84,9 +84,8 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         
         $headers = $request->headers();
         $keys    = array(
-            'Request Method', 'Request Url', 'Host', 'User-Agent', 
-            'Accept', 'Accept-Language', 'Accept-Encoding', 'Accept-Charset', 
-            'Keep-Alive', 'Connection', 'Cache-Control'
+            'Host', 'User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 
+            'Accept-Charset', 'Keep-Alive', 'Connection', 'Cache-Control'
         );
         
         foreach($keys as $key) {
@@ -217,7 +216,6 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
     public function StaticMethod_ValidateContentTypeFailureInvalidMethod(\pint\Request $request)
     {   
         $headers = $request->headers();
-        $headers['Request Method'] = 'DELETE';
         $request['method'] = 'DELETE';
         $headers['Content-Type']  = 'application/json';
         $request['headers'] = $headers;
@@ -235,13 +233,26 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
     public function StaticMethod_ValidateContentTypeFailureInvalidContentType(\pint\Request $request)
     {   
         $headers = $request->headers();
-        $headers['Request Method'] = 'POST';
         $request['method'] = 'POST';
         unset($headers['Content-Type']);
         $request['headers'] = $headers;
         
         $status = \pint\Request::validateContentType($request);
         $this->assertFalse($status);
+    }
+    
+    /**
+     * 
+     * @test
+     * @runInSeparateProcess
+     * @depends HeadersSuccesfullyParsed
+     */
+    public function HeaderGetsFiltered(\pint\Request $request)
+    {  
+        $headers = $request->headers();
+        
+        $this->assertFalse(\array_key_exists('Request Method', $headers));
+        $this->assertFalse(\array_key_exists('Request Url', $headers));
     }
     
     /**
