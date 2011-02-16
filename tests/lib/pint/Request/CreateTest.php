@@ -43,15 +43,6 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
     
     /**
      * 
-     * @return Mock
-     */
-    public function getConnection()
-    {
-        return $this->getMock('\pint\Connection', array('criticizeSyntax', 'input'), array(), 'Connection', false);
-    }
-    
-    /**
-     * 
      * @test
      * @runInSeparateProcess
      */
@@ -59,7 +50,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
     {
         $input  = \implode("\r\n", $this->input_headers);
         $input .= \implode('', $this->input_body);
-        $request = \pint\Request::parse($this->getConnection(), $input, array());
+        $request = \pint\Request::parse($input, array());
         
         $this->assertInstanceOf('\pint\Request', $request);
     }
@@ -70,20 +61,9 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      * @runInSeparateProcess
      * @expectedException \pint\Exception
      */
-    public function ThrowsExceptionOnEmptyInputFromConnection()
+    public function ThrowsExceptionOnEmptyInput()
     {
-       \pint\Request::parse($this->getConnection(), '');
-    }
-    
-    /**
-     * 
-     * @test
-     * @runInSeparateProcess
-     * @expectedException \pint\Exception
-     */
-    public function ThrowsExceptionOnEmptyInputFromArgument()
-    {
-        \pint\Request::parse($this->getConnection());
+       \pint\Request::parse('');
     }
     
     /**
@@ -96,7 +76,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         $input  = \implode("\r\n", $this->input_headers);
         $input .= \implode('', $this->input_body);
         
-        $request = \pint\Request::parse($this->getConnection(), $input);
+        $request = \pint\Request::parse($input);
         $this->assertNotEmpty($request['headers']);
         $this->assertNotEmpty($request['method']);
         $this->assertNotEmpty($request['uri']);
@@ -125,19 +105,16 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      */
     public function InvalidHeaders_MissingMethodUri()
     {
-        $connection = $this->getConnection();
-        $connection->expects($this->once())
-                   ->method('criticizeSyntax')
-                   ->with($this->equalTo('\pint\Request::parseHeaders'));
-        
         $incompleteHeaders = $this->input_headers;
         unset($incompleteHeaders['request']);
         
         $input  = \implode("\r\n", $incompleteHeaders);
         $input .= \implode('', $this->input_body);
         
-        $request = \pint\Request::parse($connection, $input);
+        $request = \pint\Request::parse($input);
         
+        $this->assertTrue($request->haserror());
+        $this->assertEquals('\pint\Request::parseHeaders', $request->errormsg());
         $this->assertEquals($request['headers'], array());
         $this->assertEquals($request['method'],  null);
         $this->assertEquals($request['uri'],     null);
@@ -151,19 +128,16 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      */
     public function InvalidHeaders_InvalidHeadRequestFromRequestLine()
     {
-        $connection = $this->getConnection();
-        $connection->expects($this->once())
-                   ->method('criticizeSyntax')
-                   ->with($this->equalTo('\pint\Request::parseHeaders'));
-        
         $defectHeaders = $this->input_headers;
         $defectHeaders['request'] = 'GET / HTTP/1.1 asdas asd asd';
         
         $input  = \implode("\r\n", $defectHeaders);
         $input .= \implode('', $this->input_body);
+
+        $request = \pint\Request::parse($input);
         
-        $request = \pint\Request::parse($connection, $input);
-        
+        $this->assertTrue($request->haserror());
+        $this->assertEquals('\pint\Request::parseHeaders', $request->errormsg());
         $this->assertEquals($request['headers'], array());
         $this->assertEquals($request['method'],  null);
         $this->assertEquals($request['uri'],     null);

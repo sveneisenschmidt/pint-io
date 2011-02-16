@@ -2,8 +2,7 @@
 
 namespace pint;
 
-use \pint\Connection,
-    \pint\Exception;
+use \pint\Exception;
 
 /**
  * 
@@ -69,6 +68,12 @@ class Request implements \ArrayAccess
         505 => "HTTP Version Not Supported"
     );
     
+    /**
+     *
+     * @var string
+     */
+    protected $errormsg = null;
+    
     
     /*
     
@@ -92,14 +97,12 @@ class Request implements \ArrayAccess
     
     /**
      * 
-     * @param \pint\Connection $connection
      * @param string $input
-     * @return \pint\Request
+     * @return boolean|\pint\Request
      */
-    public static function parse(\pint\Connection $connection, $input = null, array $filters = null)
+    public static function parse($input, array $filters = null)
     {
         $instance = new self();
-        $input    = is_null($input) ? $connection->input() : $input;
 
         if(empty($input)) {
             throw new Exception('Empty in input received from connection!');
@@ -113,11 +116,11 @@ class Request implements \ArrayAccess
             );  
         }
         
-        
+        $badRequest = false; 
         foreach($filters as $name => $args) {
             if(!\call_user_func_array(\explode('::', $name), $args)) {
-                $connection->criticizeSyntax($name);
-                break;
+                $instance->errormsg($name);
+                $badRequest = true; break;
             }  
         }
         
@@ -227,11 +230,34 @@ class Request implements \ArrayAccess
     
     /**
      *
+     * @param int|string $code
      * @return string
      */
     public function statusmsg($code)
     {
         return $this->status[$code];
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function errormsg($msg = null)
+    {
+        if(!is_null($msg)) {
+            $this->errormsg = $msg;
+            return;
+        }
+        return $this->errormsg;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function haserror()
+    {
+        return !(trim($this->errormsg) == "");
     }
     
     

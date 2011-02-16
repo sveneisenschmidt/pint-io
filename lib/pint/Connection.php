@@ -36,9 +36,11 @@ class Connection
         ));
         
         $this->read();
-        $this->request = Request::parse($this);
+        $this->request = Request::parse($this->input());
         
-        
+        if($this->request->haserror()) {
+            $this->criticizeSyntax();
+        }
     }
 
     /**
