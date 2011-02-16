@@ -113,7 +113,6 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         $request = \pint\Request::parse($input);
         
         $this->assertTrue($request->haserror());
-        $this->assertEquals('\pint\Request::parseHeaders', $request->errormsg());
         $this->assertEquals($request['headers'], array());
         $this->assertEquals($request['method'],  null);
         $this->assertEquals($request['uri'],     null);
@@ -136,7 +135,6 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         $request = \pint\Request::parse($input);
         
         $this->assertTrue($request->haserror());
-        $this->assertEquals('\pint\Request::parseHeaders', $request->errormsg());
         $this->assertEquals($request['headers'], array());
         $this->assertEquals($request['method'],  null);
         $this->assertEquals($request['uri'],     null);
@@ -147,17 +145,24 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      * 
      * @test
      * @runInSeparateProcess
+     * @expectedException Exception
      */
-    public function StaticMethod_ParseHeaders()
+    public function StaticMethod_ParseHeadersFailure()
     {
-        $status = \pint\Request::parseHeaders(new \pint\Request(), '');
-        $this->assertFalse($status);
-        
+        \pint\Request::parseHeaders(new \pint\Request(), '');
+    }
+    
+    /**
+     * 
+     * @test
+     * @runInSeparateProcess
+     */
+    public function StaticMethod_ParseHeadersSuccess()
+    {
         $input  = \implode("\r\n", $this->input_headers);
         $input .= \implode('', $this->input_body);
         
-        $status = \pint\Request::parseHeaders(new \pint\Request(), $input);
-        $this->assertTrue($status);
+        \pint\Request::parseHeaders(new \pint\Request(), $input);
     }
     
     /**
@@ -167,20 +172,17 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      */
     public function StaticMethod_ParseRequestLineSuccess()
     {
-        $defectHeaders = $this->input_headers;
-        $defectHeaders['request'] = 'GET / HTTP/1.1';
-        
-        $input  = \implode("\r\n", $defectHeaders);
+        $input  = \implode("\r\n", $this->input_headers);
         $input .= \implode('', $this->input_body);
         
-        $status = \pint\Request::parseRequestLine(new \pint\Request(), $input);
-        $this->assertTrue($status);
+        \pint\Request::parseRequestLine(new \pint\Request(), $input);
     }
     
     /**
      * 
      * @test
      * @runInSeparateProcess
+     * @expectedException Exception
      */
     public function StaticMethod_ParseRequestLineFailure()
     {
@@ -190,8 +192,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         $input  = \implode("\r\n", $defectHeaders);
         $input .= \implode('', $this->input_body);
         
-        $status = \pint\Request::parseRequestLine(new \pint\Request(), $input);
-        $this->assertFalse($status);
+        \pint\Request::parseRequestLine(new \pint\Request(), $input);
     }
     
     /**
@@ -202,8 +203,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      */
     public function StaticMethod_ValidateContentTypeSuccess(\pint\Request $request)
     {   
-        $status = \pint\Request::validateContentType($request);
-        $this->assertTrue($status);
+        \pint\Request::validateContentType($request);
         
     }
     
@@ -212,6 +212,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      * @test
      * @runInSeparateProcess
      * @depends HeadersSuccesfullyParsed
+     * @expectedException Exception
      */
     public function StaticMethod_ValidateContentTypeFailureInvalidMethod(\pint\Request $request)
     {   
@@ -220,8 +221,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         $headers['Content-Type']  = 'application/json';
         $request['headers'] = $headers;
         
-        $status = \pint\Request::validateContentType($request);
-        $this->assertFalse($status);
+        \pint\Request::validateContentType($request);
     }
     
     /**
@@ -229,6 +229,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      * @test
      * @runInSeparateProcess
      * @depends HeadersSuccesfullyParsed
+     * @expectedException Exception
      */
     public function StaticMethod_ValidateContentTypeFailureInvalidContentType(\pint\Request $request)
     {   
@@ -237,8 +238,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         unset($headers['Content-Type']);
         $request['headers'] = $headers;
         
-        $status = \pint\Request::validateContentType($request);
-        $this->assertFalse($status);
+         \pint\Request::validateContentType($request);
     }
     
     /**

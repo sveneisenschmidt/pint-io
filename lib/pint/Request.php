@@ -110,18 +110,22 @@ class Request implements \ArrayAccess
         
         if(is_null($filters)) {
             $filters = array(
-                '\\' . __CLASS__ . '::parseHeaders'        => array($instance, $input),
-                '\\' . __CLASS__ . '::parseRequestLine'    => array($instance, $input),
-                '\\' . __CLASS__ . '::validateContentType' => array($instance),
+                '\\' . __CLASS__ . '::parseHeaders',
+                '\\' . __CLASS__ . '::parseRequestLine',
+                '\\' . __CLASS__ . '::validateContentType',
             );  
         }
         
-        $badRequest = false; 
-        foreach($filters as $name => $args) {
-            if(!\call_user_func_array(\explode('::', $name), $args)) {
-                $instance->errormsg($name);
-                $badRequest = true; break;
-            }  
+        foreach($filters as $func) {
+            if(\strpos($func, '::') !== false) {
+                $func = \explode('::', $func);
+            }
+            try {
+                \call_user_func_array($func, array($instance, $input));
+            } catch(Exception $e) {
+                $instance->errormsg($e->getMessage());
+                break;
+            }
         }
         
         return $instance;
@@ -141,7 +145,7 @@ class Request implements \ArrayAccess
            !\array_key_exists('Request Method', $raw) ||
            !\array_key_exists('Request Url', $raw)    
         ) {
-            return false;
+            throw new \pint\Exception('Could not parse headers!');
         }
         
         $request->offsetSet('method',  $raw['Request Method']);
@@ -149,7 +153,6 @@ class Request implements \ArrayAccess
         
         unset($raw['Request Method'], $raw['Request Url']);
         $request->offsetSet('headers', $raw);
-        return true;
     }
     
     /**
@@ -163,13 +166,11 @@ class Request implements \ArrayAccess
         $lines = \explode("\r\n", $input);
         \preg_match("#^(?P<method>GET|HEAD|POST|PUT|OPTIONS|DELETE)\s+(?P<uri>[^\s]+)\s+HTTP/(?P<version>1\.\d)$#U", trim($lines[0]), $matches);
         if(!\array_key_exists('version', $matches)) {
-            return false;
+            throw new \pint\Exception('Could not parse rrequest line!');
         }
         
         $request->offsetSet('version', $matches['version']);
         unset($matches);
-        
-        return true;
     }
     
     /**
@@ -183,14 +184,12 @@ class Request implements \ArrayAccess
         $method  = $request->method();
         
         if(\array_key_exists('Content-Type', $headers) && !\in_array($method, array('POST', 'PUT'))) {
-            return false;
+            throw new \pint\Exception('Conten-Type header is set but wrong HTTP method, epxected POST or PUT');
         }
         
         if(\in_array($method, array('POST', 'PUT')) && !\array_key_exists('Content-Type', $headers)) {
-            return false;
+            throw new \pint\Exception('Conten-Type header is not set but is needed by POST or PUT requests.');
         }
-        
-        return true;
     }
     
     /**
