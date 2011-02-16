@@ -15,73 +15,6 @@ class Connection
     protected $socket = null;
     
     /**
-     *
-     * @var array
-     */
-    protected $headers  = array();
-    
-    /**
-     *
-     * @var string
-     */
-    protected $method = null;
-    
-    /**
-     *
-     * @var string
-     */
-    protected $uri = null;
-    
-    /**
-     *
-     * @var string
-     */
-    protected $version = null;
-
-    protected $status = array(
-        100 => "Continue",
-        101 => "Switching Protocols",
-        200 => "OK",
-        201 => "Created",
-        202 => "Accepted",
-        203 => "Non-Authoritative Information",
-        204 => "No Content",
-        205 => "Reset Content",
-        206 => "Partial Content",
-        300 => "Multiple Choices",
-        301 => "Moved Permanently",
-        302 => "Found",
-        303 => "See Other",
-        304 => "Not Modified",
-        305 => "Use Proxy",
-        307 => "Temporary Redirect",
-        400 => "Bad Request",
-        401 => "Unauthorized",
-        402 => "Payment Required",
-        403 => "Forbidden",
-        404 => "Not Found",
-        405 => "Method Not Allowed",
-        406 => "Not Acceptable",
-        407 => "Proxy Authentication Required",
-        408 => "Request Timeout",
-        409 => "Conflict",
-        410 => "Gone",
-        411 => "Length Required",
-        412 => "Precondition Failed",
-        413 => "Request Entity Too Large",
-        414 => "Request URI Too Long",
-        415 => "Unsupported Media Type",
-        416 => "Requested Range Not Satisfiable",
-        417 => "Expectation Failed",
-        500 => "Internal Server Error",
-        501 => "Method Not Implemented",
-        502 => "Bad Gateway",
-        503 => "Service Unavailable",
-        504 => "Gateway Timeout",
-        505 => "HTTP Version Not Supported"
-    );
-    
-    /**
      * 
      * @param resource $socket
      * @return void
@@ -103,8 +36,9 @@ class Connection
         ));
         
         $this->read();
-        $this->parse();
         $this->request = Request::parse($this);
+        
+        
     }
 
     /**
@@ -116,7 +50,7 @@ class Connection
         $this->write(array(
             400,
             array("Content-Type" => "text/html"),
-            array("400 " . $this->status[400])
+            array("400 " . $this->request->statusmsg(400))
         ));
     }
 
@@ -164,7 +98,7 @@ class Connection
         ));
 
         // response line
-        $buffer = \vsprintf("HTTP/1.1 %s %s\r\n", array($response[0], $this->status[$response[0]]));
+        $buffer = \vsprintf("HTTP/1.1 %s %s\r\n", array($response[0], $this->request->statusmsg($response[0])));
         
         \array_walk($response[1], function($value, $key) use ($buffer) {
             $buffer .= \vsprintf("%s: %s\r\n", array($key, $value));
@@ -200,48 +134,11 @@ class Connection
 
     /**
      *
-     * @return string
-     */
-    function method()
-    {
-        return $this->method;
-    }
-
-    /**
-     *
-     * @return string
-     */
-    function uri()
-    {
-        return $this->uri;
-    }
-
-    /**
-     *
-     * @return string
-     */
-    function version()
-    {
-        return $this->version;
-    }
-
-    /**
-     *
      * @return int
      */
     function pid()
     {
         return \posix_getpid();
-    }
-
-
-    /**
-     *
-     * @return array
-     */
-    function headers()
-    {
-        return $this->headers;
     }
 
     /**
@@ -251,76 +148,20 @@ class Connection
     function env()
     {
         $env = array(
-            "REQUEST_METHOD" => $this->method(),
-            "REQUEST_URI" => $this->uri(),
+            "REQUEST_METHOD" => $this->request->method(),
+            "REQUEST_URI" => $this->request->uri(),
             "SERVER_SOFTWARE" => "pint/0.0.0",
             "SERVER_PROTOCOL" => "HTTP/1.1",
             "SERVER_NAME" => "pint.io",
             "SERVER_PORT" => "3000"
         );
-        foreach ($this->headers() as $key => $value)
+        foreach ($this->request->headers() as $key => $value)
         {
             $key = \preg_replace("#[^a-z]+#i", "_", $key);
             $env["HTTP_" . \strtoupper($key)] = $value;
         }
         return \array_merge($env, array(
-            "HTTP_VERSION" => "HTTP/" . $this->version()
+            "HTTP_VERSION" => "HTTP/" . $this->request->version()
         ));
-    }
-    
-
-    
-    /**
-     * 
-     * @return void
-     */
-    function parse()
-    {
-        
-        
-        $raw   = \http_parse_headers($this->input);
-        $lines = \explode("\r\n", \trim($this->input));
-        
-        if(!\array_key_exists('Request Method', $raw) ||
-           !\array_key_exists('Request Url', $raw)    
-        ) {
-            return $this->criticizeSyntax();
-        }
-        
-        $this->headers = $raw;
-        $this->method  = trim($raw['Request Method']);
-        $this->uri     = trim($raw['Request Url']);        
-        
-        \preg_match("#^(?P<method>GET|HEAD|POST|PUT|OPTIONS|DELETE)\s+(?P<uri>[^\s]+)\s+HTTP/(?P<version>1\.\d)$#U", trim($lines[0]), $matches);
-        if(!\array_key_exists('version', $matches)) {
-            return $this->criticizeSyntax();
-        } else {
-            $this->version = $matches['version'];
-            unset($matches);
-        }
-
-        
-        // content type is not allowed when performing get requests
-        if(array_key_exists('Content-Type', $raw) &&
-           !in_array($this->method, array('POST', 'PUT'))
-        ) {
-            return $this->criticizeSyntax();
-        } 
-        
-        
-        // application/x-www-url-encoded; charset=UTF-8
-//        \preg_match('/^(?P<ctype>.*?);[\s]charset=(?P<charset>.+)/i', trim($raw['Content-Type']), $matches);
-//        $ctype  = $matches['ctype'];
-//        $chrset = $matches['charset'];
-//        
-//        if(!\in_array($ctype, 'text/plain', 'application/x-www-url-encoded', 'formdata/multipart')) {
-//            return $this->criticizeSyntax();
-//        }
-        
-        
-        
-        
-        unset($raw, $lines, $matches);
-        
     }
 }

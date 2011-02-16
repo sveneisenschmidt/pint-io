@@ -104,20 +104,76 @@ class Request implements \ArrayAccess
             throw new Exception('Empty in input received from connection!');
         }
         
+        $filters = array(
+            __CLASS__ . '::parseHeaders'        => array($instance, $input),
+            __CLASS__ . '::parseRequestLine'    => array($instance, $input),
+            __CLASS__ . '::validateContentType' => array($instance),
+        );
+        
+        \array_walk($filters, function($args, $name) use($connection) {
+            if(!\call_user_func_array(\explode('::', $name), $args)) {
+                $connection->criticizeSyntax();
+            }
+        });
+        
+        return $instance;
+    }
+    
+    /**
+     *
+     * @param \pint\Request $request
+     * @param string $input
+     * @return boolean
+     */
+    static function parseHeaders(\pint\Request $request, $input)
+    {
         $raw   = \http_parse_headers($input);
-        $lines = \explode("\r\n", $input);
         
         if(!\array_key_exists('Request Method', $raw) ||
            !\array_key_exists('Request Url', $raw)    
         ) {
-            return $connection->criticizeSyntax();
+            return false;
         }
         
-        $instance->offsetSet('headers', $raw);
-        $instance->offsetSet('method',  $raw['Request Method']);
-        $instance->offsetSet('uri',     $raw['Request Url']);
+        $request->offsetSet('headers', $raw);
+        $request->offsetSet('method',  $raw['Request Method']);
+        $request->offsetSet('uri',     $raw['Request Url']);
         
-        return $instance;
+        return true;
+    }
+    
+    /**
+     *
+     * @param \pint\Request $request
+     * @param string $input
+     * @return boolean
+     */
+    static function parseRequestLine(\pint\Request $request, $input)
+    {
+        $lines = \explode("\r\n", $input);
+        \preg_match("#^(?P<method>GET|HEAD|POST|PUT|OPTIONS|DELETE)\s+(?P<uri>[^\s]+)\s+HTTP/(?P<version>1\.\d)$#U", trim($lines[0]), $matches);
+        if(!\array_key_exists('version', $matches)) {
+            return false;
+        }
+        
+        $request->offsetSet('version', $matches['version']);
+        unset($matches);
+        
+        return true;
+    }
+    
+    /**
+     *
+     * @param \pint\Request $request
+     * @return boolean
+     */
+    static function validateContentType(\pint\Request $request)
+    {
+        $headers = $request->headers();
+        $method  = $request->method();
+        
+        return !(array_key_exists('Content-Type', $headers) && 
+                !in_array($method, array('POST', 'PUT')));
     }
     
     /**
