@@ -25,7 +25,17 @@ class Request implements \ArrayAccess
      *
      * @var array
      */
-    public $status = array(
+    protected static $filters = array(
+        '\pint\Request::parseHeaders',
+        '\pint\Request::parseRequestLine',
+        '\pint\Request::validateContentType'
+    );
+    
+    /**
+     *
+     * @var array
+     */
+    protected $status = array(
         100 => "Continue",
         101 => "Switching Protocols",
         200 => "OK",
@@ -109,19 +119,15 @@ class Request implements \ArrayAccess
         }
         
         if(is_null($filters)) {
-            $filters = array(
-                '\\' . __CLASS__ . '::parseHeaders',
-                '\\' . __CLASS__ . '::parseRequestLine',
-                '\\' . __CLASS__ . '::validateContentType',
-            );  
+            $filters = self::$filters;  
         }
         
         foreach($filters as $func) {
-            if(\strpos($func, '::') !== false) {
+            if(is_string($func) && \strpos($func, '::') !== false) {
                 $func = \explode('::', $func);
             }
             try {
-                \call_user_func_array($func, array($instance, $input));
+                static::callFilter($func, array($instance, $input));
             } catch(Exception $e) {
                 $instance->errormsg($e->getMessage());
                 break;
@@ -129,6 +135,15 @@ class Request implements \ArrayAccess
         }
         
         return $instance;
+    }
+    
+    /**
+     * 
+     * @return void
+     */
+    public static function callFilter($name, $args)
+    {
+        \call_user_func_array($name, $args);
     }
     
     /**

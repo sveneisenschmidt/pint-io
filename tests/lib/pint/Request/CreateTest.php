@@ -3,7 +3,6 @@
 namespace tests\lib\pint;
 
 use \pint\Request,
-    \pint\Connection,
     \pint\Exception;
 
 
@@ -260,8 +259,67 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      * @test
      * @runInSeparateProcess
      */
-    public function FilterSupport()
+    public function FilterSupport_DefaultFilters()
     {
-        $this->markTestIncomplete('This test has not been implemented yet.');
+        $request = $this->getMockClass('\pint\Request', array('callFilter'), array(), 'RequestMock', false);
+        $request::staticExpects($this->exactly(3))
+                ->method('callFilter')
+                ->will($this->returnValue(null));        
+        
+        $input  = \implode("\r\n", $this->input_headers);
+        $input .= \implode('', $this->input_body);
+        
+        $instance = $request::parse($input);
+        $this->assertInstanceOf('\pint\Request', $instance);
+    }
+    
+    /**
+     * 
+     * @test
+     * @runInSeparateProcess
+     */
+    public function FilterSupport_CustomFilter()
+    {
+        $request = $this->getMockClass('\pint\Request', array('callFilter'), array(), 'RequestMock', false);
+        $request::staticExpects($this->exactly(1))
+                ->method('callFilter')
+                ->will($this->returnValue('custom'));     
+        
+        $instance = $request::parse('some input text', array(
+            function() { return 'custom'; }
+        ));
+        $this->assertInstanceOf('\pint\Request', $instance);
+    }
+    
+    /**
+     * 
+     * @test
+     * @runInSeparateProcess
+     */
+    public function FilterSupport_CustomFilterThrowsException()
+    {
+        $message = 'something went wrong!';
+        $request = $this->getMockClass('\pint\Request', array('callFilter'), array(), 'RequestMock', false);
+        $request::staticExpects($this->exactly(1))
+                ->method('callFilter')
+                ->will($this->throwException(new \pint\Exception($message)));     
+        
+        $instance = $request::parse('some input text', array(
+            function() {}
+        ));
+        
+        $this->assertInstanceOf('\pint\Request', $instance);
+        $this->assertTrue($instance->haserror());
+        $this->assertEquals($message, $instance->errormsg());
+    }
+    
+    /**
+     * 
+     * @test
+     * @runInSeparateProcess
+     */
+    public function FilterSupport_FilterNameSplit()
+    {
+        $this->markTestIncomplete();
     }
 }

@@ -117,15 +117,6 @@ class Request_BaseTest extends \PHPUnit_Framework_TestCase
      * 
      * @test
      */
-    public function RightStatusMessagegetsReturned()
-    {
-        $this->assertEquals('Bad Request', $this->request->statusmsg(400));
-    }
-    
-    /**
-     * 
-     * @test
-     */
     public function ErrorMessageHandling()
     {
         $message = 'test error test123 !?+*';
@@ -137,6 +128,15 @@ class Request_BaseTest extends \PHPUnit_Framework_TestCase
         $this->request->errormsg($message);
         $this->assertEquals($message, $this->request->errormsg());
         $this->assertTrue($this->request->haserror());
+    }
+    
+    /**
+     * 
+     * @test
+     */
+    public function RightStatusMessagegetsReturned()
+    {
+        $this->assertEquals('Bad Request', $this->request->statusmsg(400));
     }
     
     
