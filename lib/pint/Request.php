@@ -2,7 +2,8 @@
 
 namespace pint;
 
-use \pint\Connection;
+use \pint\Connection,
+    \pint\Exception;
 
 /**
  * 
@@ -25,7 +26,7 @@ class Request implements \ArrayAccess
      *
      * @var array
      */
-    protected $status = array(
+    public $status = array(
         100 => "Continue",
         101 => "Switching Protocols",
         200 => "OK",
@@ -95,26 +96,30 @@ class Request implements \ArrayAccess
      * @param string $input
      * @return \pint\Request
      */
-    public static function parse(\pint\Connection $connection)
+    public static function parse(\pint\Connection $connection, $input = null, array $filters = null)
     {
         $instance = new self();
-        $input    = $connection->input();
+        $input    = is_null($input) ? $connection->input() : $input;
 
         if(empty($input)) {
             throw new Exception('Empty in input received from connection!');
         }
         
-        $filters = array(
-            __CLASS__ . '::parseHeaders'        => array($instance, $input),
-            __CLASS__ . '::parseRequestLine'    => array($instance, $input),
-            __CLASS__ . '::validateContentType' => array($instance),
-        );
+        if(is_null($filters)) {
+            $filters = array(
+                '\\' . __CLASS__ . '::parseHeaders'        => array($instance, $input),
+                '\\' . __CLASS__ . '::parseRequestLine'    => array($instance, $input),
+                '\\' . __CLASS__ . '::validateContentType' => array($instance),
+            );  
+        }
         
-        \array_walk($filters, function($args, $name) use($connection) {
+        
+        foreach($filters as $name => $args) {
             if(!\call_user_func_array(\explode('::', $name), $args)) {
-                $connection->criticizeSyntax();
-            }
-        });
+                $connection->criticizeSyntax($name);
+                break;
+            }  
+        }
         
         return $instance;
     }
@@ -127,9 +132,10 @@ class Request implements \ArrayAccess
      */
     static function parseHeaders(\pint\Request $request, $input)
     {
-        $raw   = \http_parse_headers($input);
+        $raw   = @\http_parse_headers($input);
         
-        if(!\array_key_exists('Request Method', $raw) ||
+        if($raw === false ||
+           !\array_key_exists('Request Method', $raw) ||
            !\array_key_exists('Request Url', $raw)    
         ) {
             return false;
@@ -172,8 +178,15 @@ class Request implements \ArrayAccess
         $headers = $request->headers();
         $method  = $request->method();
         
-        return !(array_key_exists('Content-Type', $headers) && 
-                !in_array($method, array('POST', 'PUT')));
+        if(\array_key_exists('Content-Type', $headers) && !\in_array($method, array('POST', 'PUT'))) {
+            return false;
+        }
+        
+        if(\in_array($method, array('POST', 'PUT')) && !\array_key_exists('Content-Type', $headers)) {
+            return false;
+        }
+        
+        return true;
     }
     
     /**
@@ -261,6 +274,15 @@ class Request implements \ArrayAccess
      */
     public function offsetUnset($offset) 
     {
-        unset($this->container[$offset]);
+        throw new \pint\Exception('Not allowed to unset any values!');
+    }
+    
+    /**
+     * 
+     * @return void
+     */
+    public function states() 
+    {
+        return $this->status;
     }
 }
