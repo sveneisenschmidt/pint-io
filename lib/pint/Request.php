@@ -135,7 +135,7 @@ class Request implements \ArrayAccess
      *
      * @param \pint\Request $request
      * @param string $input
-     * @return boolean
+     * @return void
      */
     static function parseHeaders(\pint\Request $request, $input)
     {
@@ -159,7 +159,7 @@ class Request implements \ArrayAccess
      *
      * @param \pint\Request $request
      * @param string $input
-     * @return boolean
+     * @return void
      */
     static function parseRequestLine(\pint\Request $request, $input)
     {
@@ -176,7 +176,7 @@ class Request implements \ArrayAccess
     /**
      *
      * @param \pint\Request $request
-     * @return boolean
+     * @return void
      */
     static function validateContentType(\pint\Request $request)
     {
