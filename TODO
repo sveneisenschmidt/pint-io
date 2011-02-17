@@ -1,5 +1,4 @@
 * Implement support for UNIX domain sockets
-* Make sure the worker's are killed if they timeout while shutting down
 * speicherlimit
   server bekommt ein ram limit, und muss sich vergewissern bei jeder request annahme
   ob die content length des request (POST/PUT) das speicherlimit überschreitet
