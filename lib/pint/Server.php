@@ -236,23 +236,7 @@ class Server
                 $worker->shutdown();
             }
 
-            while (count($this->workers) > 0)
-            {
-                foreach ($this->workers as $i => $worker)
-                {
-                    if (!$worker->alive())
-                    {
-                        // worker died, delete its ping file
-                        unset($this->workers[$i]);
-                    }
-                    else
-                    {
-                        // the worker will be KILLed by the kernel if we immediately exit.
-                        // we are graceful and let it finish its request
-                        pcntl_waitpid($worker->pid(), $status, WNOHANG);
-                    }
-                }
-            }
+            $this->maintainWorkers(false);
         }
 
         // clean up
@@ -292,7 +276,7 @@ class Server
      *
      * @todo the pcntl_wait() stuff is complete bollocks
      */
-    function maintainWorkers()
+    function maintainWorkers($forkNew = true)
     {
         foreach ($this->workers as $worker)
         {
@@ -318,8 +302,10 @@ class Server
         // reindex workers
         $this->workers = array_values($this->workers);
 
-        // fork new workers
-        $this->forkWorkers();
+        if ($forkNew) {
+            // fork new workers
+            $this->forkWorkers();
+        }
     }
 
     /**
