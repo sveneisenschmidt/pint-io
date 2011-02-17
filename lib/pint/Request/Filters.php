@@ -67,6 +67,9 @@ class Filters
         $method         = $request['REQUEST_METHOD'];
         $contenttypeset = isset($request['HTTP_CONTENT_TYPE']) && !empty($request['HTTP_CONTENT_TYPE']); 
         
+        if(is_array($request['HTTP_CONTENT_TYPE'])) {
+            $request['HTTP_CONTENT_TYPE'] = $request['HTTP_CONTENT_TYPE'][0];
+        }
         
         if($method == 'POST' || $method == 'PUT') {
             if(!$contenttypeset) {
@@ -137,15 +140,9 @@ class Filters
             throw new \pint\Exception('PUT request but empty body received!');
         }   
         
-        list($contenttype, $charset) = \preg_split('#\s*;\s*#', $request['HTTP_CONTENT_TYPE']);
+        list($contenttype, $rest) = \preg_split('#\s*;\s*#', $request['HTTP_CONTENT_TYPE']);
         
-        if(is_null($charset) && $contenttype != 'application/octet-stream') {
-            $charset = 'UTF-8';         
-        }
         
-        var_dump($request);
-        
-        return;
         switch($contenttype) {
         
             case 'application/octet-stream':
@@ -154,8 +151,14 @@ class Filters
             break;
             
             case 'multipart/form-data':
+                if(strpos($rest, 'boundary=') === false) {
+                    throw new \pint\Exception('Could not detect boundary!');
+                }
                 
-            var_dump($body);
+                //see @ http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
+                $boundary = str_replace('boundary=', '', $rest);
+                
+                var_dump(strpos($body, $boundary));
 
             break;
             

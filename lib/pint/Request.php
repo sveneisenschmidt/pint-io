@@ -100,11 +100,11 @@ class Request extends ContainerAbstract
                 $parts = \explode("\r\n\r\n", $chunk);
                 $headers .= $parts[0];
                 
-                if (!is_array($headers) && \preg_match("#\r\nExpect: *100-continue\r\n#", $headers) && $continued == false) {
+                if (@\preg_match("#\r\nExpect: *100-continue\r\n#", $headers) && $continued == false) {
                     $buffer = "HTTP/1.1 100 Continue\r\n";
                     
                     \socket_write($socket->resource(), $buffer, strlen($buffer));
-                    sleep(1);
+                    usleep(1000000);
                     $continued = true;
                     continue;
                 }        
