@@ -9,3 +9,5 @@
 * Outsource middleware/app stack into a separate class so apps can also build stacks
 * Request env should also contain SERVER_ADDR, REMOTE_ADDR and REMOTE_PORT
 * SERVER_NAME from gethostname(), SERVER_PORT from config
+* Use a POSIX FIFO pipe for pinging
+* Have a look at Server->maintainWorkers
