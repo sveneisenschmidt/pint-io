@@ -3,6 +3,7 @@
 namespace tests\lib\pint;
 
 use \pint\Request,
+    \pint\Request\Filters,
     \pint\Exception;
 
 
@@ -148,7 +149,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      */
     public function StaticMethod_ParseHeadersFailure()
     {
-        \pint\Request::parseHeaders(new \pint\Request(), '');
+        \pint\Request\Filters::parseHeaders(new \pint\Request(), '');
     }
     
     /**
@@ -161,7 +162,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         $input  = \implode("\r\n", $this->input_headers);
         $input .= \implode('', $this->input_body);
         
-        \pint\Request::parseHeaders(new \pint\Request(), $input);
+        \pint\Request\Filters::parseHeaders(new \pint\Request(), $input);
     }
     
     /**
@@ -174,7 +175,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         $input  = \implode("\r\n", $this->input_headers);
         $input .= \implode('', $this->input_body);
         
-        \pint\Request::parseRequestLine(new \pint\Request(), $input);
+        \pint\Request\Filters::parseRequestLine(new \pint\Request(), $input);
     }
     
     /**
@@ -191,7 +192,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         $input  = \implode("\r\n", $defectHeaders);
         $input .= \implode('', $this->input_body);
         
-        \pint\Request::parseRequestLine(new \pint\Request(), $input);
+        \pint\Request\Filters::parseRequestLine(new \pint\Request(), $input);
     }
     
     /**
@@ -202,7 +203,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      */
     public function StaticMethod_ValidateContentTypeSuccess(\pint\Request $request)
     {   
-        \pint\Request::validateContentType($request);
+        \pint\Request\Filters::validateContentType($request);
         
     }
     
@@ -220,7 +221,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         $headers['Content-Type']  = 'application/json';
         $request['headers'] = $headers;
         
-        \pint\Request::validateContentType($request);
+        \pint\Request\Filters::validateContentType($request);
     }
     
     /**
@@ -237,7 +238,7 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
         unset($headers['Content-Type']);
         $request['headers'] = $headers;
         
-         \pint\Request::validateContentType($request);
+         \pint\Request\Filters::validateContentType($request);
     }
     
     /**
@@ -341,7 +342,4 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
     {
         return 'helper_filtername_split';
     }
-    
-    
-    
 }

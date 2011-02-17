@@ -1,21 +1,23 @@
 <?php
 
-namespace pint\middleware;
+namespace pint\Middleware;
 
-class MiddlewareAbstract
+use \pint\Mixin\OptionsAbstract;
+
+class MiddlewareAbstract extends OptionsAbstract
 {
-    protected $options, $app;
+    
+    /**
+     *
+     * @var type 
+     */
+    protected $app;
 
-    function __construct($options = array())
-    {
-        $this->options = $options;
-    }
-
-    function options()
-    {
-        return $this->options;
-    }
-
+    /**
+     *
+     * @param type $app
+     * @return type 
+     */
     function app($app = null)
     {
         if (!is_null($app))
@@ -26,6 +28,11 @@ class MiddlewareAbstract
         return $this->app;
     }
 
+    /**
+     *
+     * @param array $env
+     * @return type 
+     */
     function call(array $env)
     {
         $env["pint"]["errors"] []= get_class() . " is missing a call() method.";

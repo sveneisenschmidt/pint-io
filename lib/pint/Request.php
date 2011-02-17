@@ -2,13 +2,14 @@
 
 namespace pint;
 
-use \pint\Exception;
+use \pint\Exception,
+    \pint\Mixin\ContainerAbstract;
 
 /**
  * 
  * 
  */
-class Request implements \ArrayAccess
+class Request extends ContainerAbstract
 {
     /**
      *
@@ -26,9 +27,9 @@ class Request implements \ArrayAccess
      * @var array
      */
     protected static $filters = array(
-        '\pint\Request::parseHeaders',
-        '\pint\Request::parseRequestLine',
-        '\pint\Request::validateContentType'
+        '\pint\Request\Filters::parseHeaders',
+        '\pint\Request\Filters::parseRequestLine',
+        '\pint\Request\Filters::validateContentType'
     );
     
     /**
@@ -84,27 +85,6 @@ class Request implements \ArrayAccess
      */
     protected $errormsg = null;
     
-    
-    /*
-    
-    Example 
-     
-    Array
-    (
-        [Request Method] => GET
-        [Request Url] => /
-        [Host] => localhost:3000
-        [User-Agent] => Mozilla/5.0 (X11; Linux i686; rv:2.0b11) Gecko/20100101 Firefox/4.0b11
-        [Accept] => text/html,application/xhtml+xml,application/xml;q=0.9,* / *;q=0.8
-        [Accept-Language] => de-de,de;q=0.8,en-us;q=0.5,en;q=0.3
-        [Accept-Encoding] => gzip, deflate
-        [Accept-Charset] => ISO-8859-1,utf-8;q=0.7,*;q=0.7
-        [Keep-Alive] => 115
-        [Connection] => keep-alive
-        [Cache-Control] => max-age=0
-    )
-     */
-    
     /**
      * 
      * @param string $input
@@ -144,67 +124,6 @@ class Request implements \ArrayAccess
     public static function callFilter($name, $args)
     {
         \call_user_func_array($name, $args);
-    }
-    
-    /**
-     *
-     * @param \pint\Request $request
-     * @param string $input
-     * @return void
-     */
-    static function parseHeaders(\pint\Request $request, $input)
-    {
-        $raw   = @\http_parse_headers($input);
-        
-        if($raw === false ||
-           !\array_key_exists('Request Method', $raw) ||
-           !\array_key_exists('Request Url', $raw)    
-        ) {
-            throw new \pint\Exception('Could not parse headers!');
-        }
-        
-        $request->offsetSet('method',  $raw['Request Method']);
-        $request->offsetSet('uri',     $raw['Request Url']);
-        
-        unset($raw['Request Method'], $raw['Request Url']);
-        $request->offsetSet('headers', $raw);
-    }
-    
-    /**
-     *
-     * @param \pint\Request $request
-     * @param string $input
-     * @return void
-     */
-    static function parseRequestLine(\pint\Request $request, $input)
-    {
-        $lines = \explode("\r\n", $input);
-        \preg_match("#^(?P<method>GET|HEAD|POST|PUT|OPTIONS|DELETE)\s+(?P<uri>[^\s]+)\s+HTTP/(?P<version>1\.\d)$#U", trim($lines[0]), $matches);
-        if(!\array_key_exists('version', $matches)) {
-            throw new \pint\Exception('Could not parse rrequest line!');
-        }
-        
-        $request->offsetSet('version', $matches['version']);
-        unset($matches);
-    }
-    
-    /**
-     *
-     * @param \pint\Request $request
-     * @return void
-     */
-    static function validateContentType(\pint\Request $request)
-    {
-        $headers = $request->headers();
-        $method  = $request->method();
-        
-        if(\array_key_exists('Content-Type', $headers) && !\in_array($method, array('POST', 'PUT'))) {
-            throw new \pint\Exception('Conten-Type header is set but wrong HTTP method, epxected POST or PUT');
-        }
-        
-        if(\in_array($method, array('POST', 'PUT')) && !\array_key_exists('Content-Type', $headers)) {
-            throw new \pint\Exception('Conten-Type header is not set but is needed by POST or PUT requests.');
-        }
     }
     
     /**
@@ -275,39 +194,6 @@ class Request implements \ArrayAccess
         return !(trim($this->errormsg) == "");
     }
     
-    
-// interface methods
-    
-    /**
-     * 
-     * @param string $offset
-     * @return boolean
-     */
-    public function offsetExists($offset) 
-    {
-        return isset($this->container[$offset]);
-    }
-    
-    /**
-     * 
-     * @param string $offset
-     * @return mixed
-     */
-    public function offsetGet($offset) {
-        return $this->container[$offset];
-    }
-    
-    /**
-     * 
-     * @param string $offset
-     * @param mixed $value
-     * @return void
-     */
-    public function offsetSet($offset, $value) 
-    {
-        $this->container[$offset] = is_string($value) ? trim($value) : $value;
-    }
-    
     /**
      * 
      * @param string $offset
@@ -315,15 +201,7 @@ class Request implements \ArrayAccess
      */
     public function offsetUnset($offset) 
     {
-        throw new \pint\Exception('Not allowed to unset any values!');
+        throw new \pint\Exception('No allowed to unset any values!');
     }
     
-    /**
-     * 
-     * @return void
-     */
-    public function states() 
-    {
-        return $this->status;
-    }
 }

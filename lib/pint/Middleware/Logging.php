@@ -1,12 +1,17 @@
 <?php
 
-namespace pint\middleware;
+namespace pint\Middleware;
 
-use pint\middleware\MiddlewareAbstract;
+use pint\Middleware\MiddlewareAbstract;
 
 class Logging extends MiddlewareAbstract
 {
-    function call($env)
+    /**
+     *
+     * @param array $env
+     * @return mixed 
+     */
+    function call($env = array())
     {
         echo get_class($this) . ": request for " . $env["REQUEST_URI"] . "\n";
         return $this->app->call($env);
