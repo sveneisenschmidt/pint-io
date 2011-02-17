@@ -3,6 +3,7 @@
 namespace pint;
 
 use \pint\Exception,
+    \pint\Socket,
     \pint\Mixin\ContainerAbstract;
 
 /**
@@ -13,14 +14,21 @@ class Request extends ContainerAbstract
 {
     /**
      *
+     * @var int
+     */
+    public static $bytes = 1024;
+    
+    /**
+     *
+     * @var string
+     */
+    public $container = 'env';
+    
+    /**
+     *
      * @var array
      */
-    protected $container = array(
-        'headers' => array(),
-        'method'  => null,
-        'version' => null,
-        'uri' => null
-    );
+    protected $env = array();
     
     /**
      *
@@ -29,54 +37,8 @@ class Request extends ContainerAbstract
     protected static $filters = array(
         '\pint\Request\Filters::parseHeaders',
         '\pint\Request\Filters::parseRequestLine',
-        '\pint\Request\Filters::validateContentType'
-    );
-    
-    /**
-     *
-     * @var array
-     */
-    protected $status = array(
-        100 => "Continue",
-        101 => "Switching Protocols",
-        200 => "OK",
-        201 => "Created",
-        202 => "Accepted",
-        203 => "Non-Authoritative Information",
-        204 => "No Content",
-        205 => "Reset Content",
-        206 => "Partial Content",
-        300 => "Multiple Choices",
-        301 => "Moved Permanently",
-        302 => "Found",
-        303 => "See Other",
-        304 => "Not Modified",
-        305 => "Use Proxy",
-        307 => "Temporary Redirect",
-        400 => "Bad Request",
-        401 => "Unauthorized",
-        402 => "Payment Required",
-        403 => "Forbidden",
-        404 => "Not Found",
-        405 => "Method Not Allowed",
-        406 => "Not Acceptable",
-        407 => "Proxy Authentication Required",
-        408 => "Request Timeout",
-        409 => "Conflict",
-        410 => "Gone",
-        411 => "Length Required",
-        412 => "Precondition Failed",
-        413 => "Request Entity Too Large",
-        414 => "Request URI Too Long",
-        415 => "Unsupported Media Type",
-        416 => "Requested Range Not Satisfiable",
-        417 => "Expectation Failed",
-        500 => "Internal Server Error",
-        501 => "Method Not Implemented",
-        502 => "Bad Gateway",
-        503 => "Service Unavailable",
-        504 => "Gateway Timeout",
-        505 => "HTTP Version Not Supported"
+        '\pint\Request\Filters::validateContentType',
+        '\pint\Request\Filters::createServerEnv'
     );
     
     /**
@@ -87,15 +49,16 @@ class Request extends ContainerAbstract
     
     /**
      * 
-     * @param string $input
-     * @return boolean|\pint\Request
+     * @param \pint\Socket $socket
+     * @return \pint\Request
      */
-    public static function parse($input, array $filters = null)
+    public static function parse(Socket $socket, array $filters = null)
     {
         $instance = new self();
+        $input    = self::read($socket);
 
         if(empty($input)) {
-            throw new Exception('Empty in input received from connection!');
+            throw new Exception('Empty in input received from socket!');
         }
         
         if(is_null($filters)) {
@@ -119,6 +82,25 @@ class Request extends ContainerAbstract
     
     /**
      * 
+     * @param \pint\Socket $socket
+     * @return string
+     */
+    public static function read(Socket $socket)
+    {
+        $buffer = "";
+        while (substr($buffer, -4) !== "\r\n\r\n")
+        {
+            $chunk = $socket->receive(self::$bytes);
+            if ($chunk === false) break; 
+            
+            $buffer .= $chunk;
+        }
+    
+        return $buffer;
+    }
+    
+    /**
+     * 
      * @return void
      */
     public static function callFilter($name, $args)
@@ -132,7 +114,15 @@ class Request extends ContainerAbstract
      */
     public function headers()
     {
-        return $this->offsetGet('headers');
+        $headers = array();
+        
+        foreach($this->env as $key => $value) {
+            if(substr($key, 0, 5) == 'HTTP_') {
+                $headers[$key] = $value;
+            }
+        }        
+        
+        return $headers;
     }
     
     /**
@@ -141,7 +131,7 @@ class Request extends ContainerAbstract
      */
     public function method()
     {
-        return $this->offsetGet('method');
+        return $this->env['REQUEST_METHOD'];
     }
     
     /**
@@ -150,7 +140,7 @@ class Request extends ContainerAbstract
      */
     public function version()
     {
-        return $this->offsetGet('version');
+        return $this->env['HTTP_VERSION'];
     }
     
     /**
@@ -159,17 +149,7 @@ class Request extends ContainerAbstract
      */
     public function uri()
     {
-        return $this->offsetGet('uri');
-    }
-    
-    /**
-     *
-     * @param int|string $code
-     * @return string
-     */
-    public function statusmsg($code)
-    {
-        return $this->status[$code];
+        return $this->env['REQUEST_URI'];
     }
     
     /**

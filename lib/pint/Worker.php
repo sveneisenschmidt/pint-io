@@ -4,7 +4,9 @@ namespace pint;
 
 use \pint\Connection,
     \pint\Server,
-    \pint\Socket;
+    \pint\Socket,
+    \pint\Request,
+    \pint\Response;
 
 /**
  * Request Processor (Worker)
@@ -226,36 +228,33 @@ class Worker
      */
     function serve()
     {
-        $msg = "[pid=%s] socket_select error: [%s] %s \n";
-        $resource = $this->socket->resource();
         
-        // see if a connection comes in
-        if (!$c = @socket_select($r = array($resource), $w = null, $x = null, 1)) {
-            if ($c === false) {
-                $error = \socket_last_error($resource);
-                if (!in_array($error, array(0, 4))) {
-                    \vprintf($msg, array($this->pid(), $error, \socket_strerror($error)));
-                }
-            }
-            return;
-        }
-
-        // try to get it! go go go!
-        $socket = @socket_accept($resource);
-        if (!$socket) {
-            if (is_null($socket)) {
-                $error = \socket_last_error();
-                \vprintf($msg, array($this->pid(), $error, \socket_strerror($error)));
-            }
+        if (!$this->socket->available() || !$socket = $this->socket->accept()) {
             return;
         }
         
-        $this->requests++;
+        $socket->options(array(
+            array(\SOL_SOCKET, \SO_RCVTIMEO, array("sec" => 0, "usec" => 250)),
+            array(\SOL_SOCKET, \SO_SNDTIMEO, array("sec" => 0, "usec" => 250))
+        ));
         
-        $con = new Connection($socket);
-        $response = $this->server()->stack()->call($con->env());
-        $con->write($response);
-
+        if(!$request = Request::parse($socket)) {
+            if($socket->isClosed()) {
+                return;
+            } 
+                
+            $response = Response::badRequest();
+        } else {
+            $this->requests++;
+            try {
+                $response = $this->server()->stack()->call($request);
+            } catch (\Exception $e) {
+                $response = Response::internalServerError();
+            }
+        }
+         
+        Response::write($socket, $response);    
+        
         // die if we reached the request limit
         $config = $this->server->config();
         if ($this->requests == $config["max_requests"])

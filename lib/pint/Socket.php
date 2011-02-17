@@ -32,9 +32,9 @@ class Socket
      * @param resource $socket 
      * @return void
      */
-    public static function fromSocket($socket)
+    public static function fromSocket($socket, array $options = array())
     {
-        return new self($socket);
+        return new self($socket, $options);
         
     }
     
@@ -43,13 +43,14 @@ class Socket
      * @param resource $resource 
      * @return void
      */
-    public function __construct($resource)
+    public function __construct($resource, array $options = array())
     {
         if(!\is_resource($resource)) {
             throw new Exception('$resource is no valid socket!');
         }
         
         $this->resource = $resource;
+        $this->options($options);
     }
     
     /**
@@ -220,4 +221,28 @@ class Socket
     {
         return \socket_listen($this->resource);
     }
+
+    /**
+     *
+     * @return boolean
+     */
+    public function available()
+    {
+        return @socket_select($r = array($this->resource), $w = null, $x = null, 1);        
+    }
+
+    /**
+     *
+     * @return resource|integer
+     */
+    public function accept()
+    {
+        $resource = @socket_accept($this->resource);
+        if(!is_resource($resource)) {
+            return false;
+        }
+        
+        return self::fromSocket($resource ); 
+    }
+    
 }

@@ -6,9 +6,14 @@ class ContainerAbstract implements \ArrayAccess
 {
     /**
      *
+     * @var string
+     */
+    protected $container = 'data';
+    /**
+     *
      * @var array
      */
-    protected $container = array();
+    protected $data = array();
     
     /**
      * 
@@ -17,7 +22,7 @@ class ContainerAbstract implements \ArrayAccess
      */
     public function offsetExists($offset) 
     {
-        return isset($this->container[$offset]);
+        return isset($this->{$this->container}[$offset]);
     }
     
     /**
@@ -26,7 +31,7 @@ class ContainerAbstract implements \ArrayAccess
      * @return mixed
      */
     public function offsetGet($offset) {
-        return $this->container[$offset];
+        return $this->{$this->container}[$offset];
     }
     
     /**
@@ -37,7 +42,7 @@ class ContainerAbstract implements \ArrayAccess
      */
     public function offsetSet($offset, $value) 
     {
-        $this->container[$offset] = is_string($value) ? trim($value) : $value;
+        $this->{$this->container}[$offset] = is_string($value) ? trim($value) : $value;
     }
     
     /**
@@ -47,7 +52,7 @@ class ContainerAbstract implements \ArrayAccess
      */
     public function offsetUnset($offset) 
     {
-        unset($this->container[$offset]);
+        unset($this->{$this->container}[$offset]);
     }
     
     /**
@@ -56,7 +61,7 @@ class ContainerAbstract implements \ArrayAccess
      */
     public function states() 
     {
-        return $this->status;
+        return $this->{$this->container};
     }
 }
     
