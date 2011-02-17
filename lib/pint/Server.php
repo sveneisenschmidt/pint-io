@@ -3,6 +3,7 @@
 namespace pint;
 
 use \pint\Socket,
+    \pint\Stack,
     \pint\Worker;
 
 /**
@@ -73,18 +74,10 @@ class Server
     protected $shuttingDown = false;
 
     /**
-     * Middleware stack
+     * Middleware and App stack
      *
-     * @var array
+     * @var \pint\Stack
      */
-    protected $middleware = array();
-
-    /**
-     *
-     * @var mixed
-     */
-    protected $app;
-
     protected $stack;
 
     /**
@@ -98,6 +91,8 @@ class Server
         $this->configDefaults["before_fork"] = function($server) {};
         $this->configDefaults["after_fork"] = function($server, $worker) {};
         $this->config($config, true);
+
+        $this->stack = new Stack();
     }
 
     /**
@@ -328,53 +323,14 @@ class Server
         $this->shuttingDown = true;
     }
 
-    function middleware($mw = null, array $options = array())
-    {
-        if (!is_null($mw))
-        {
-            $this->middleware []= array($mw, $options);
-        }
-
-        return $this->middleware;
-    }
-
-    function app($app = null)
-    {
-        if (!is_null($app))
-        {
-            $this->app = $app;
-        }
-
-        return $this->app;
-    }
-
+    /**
+     * Returns the middleware/app stack
+     *
+     * @return \pint\Stack
+     */
     function stack()
     {
-        if (!$this->stack)
-        {
-            $app = $this->buildCallable($this->app);
-            foreach ($this->middleware() as $mw)
-            {
-                $outer = $this->buildCallable($mw[0], $mw[1]);
-                $outer->app($app);
-                $app = $outer;
-            }
-
-            $this->stack = $app;
-        }
-
         return $this->stack;
-    }
-
-    function buildCallable($src, $options = null)
-    {
-        $obj = is_object($src) ? $src : new $src($options);
-        if (!method_exists($obj, "call"))
-        {
-            throw new Exception(get_class($obj) . " does not have a call() method.");
-        }
-
-        return $obj;
     }
 
     /**
