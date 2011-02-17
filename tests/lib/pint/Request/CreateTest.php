@@ -320,6 +320,28 @@ class Request_CreateTest extends \PHPUnit_Framework_TestCase
      */
     public function FilterSupport_FilterNameSplit()
     {
-        $this->markTestIncomplete();
+        $request = $this->getMockClass('\pint\Request', array('callFilter'), array(), 'RequestMock', false);
+        $request::staticExpects($this->exactly(1))
+                ->method('callFilter')
+                ->will($this->returnValue('custom'));     
+        
+        $instance = $request::parse('some input text', array(
+            '\tests\lib\pint\Request_CreateTest::Helper_FilterSupport_FilterNameSplit'
+        ));
+        
+        $this->assertInstanceOf('\pint\Request', $instance);
+        $this->assertFalse($instance->haserror());
     }
+    
+    /**
+     * 
+     * @return string
+     */
+    public static function Helper_FilterSupport_FilterNameSplit()
+    {
+        return 'helper_filtername_split';
+    }
+    
+    
+    
 }
