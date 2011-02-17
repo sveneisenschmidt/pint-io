@@ -19,11 +19,7 @@ class Response extends ContainerAbstract
      *
      * @var array
      */
-    protected $parts = array(
-        0 => null,
-        1 => null,
-        2 => null,
-    );
+    protected $parts = array();
     
     /**
      *
@@ -79,11 +75,11 @@ class Response extends ContainerAbstract
      * @param array $headers
      * @return void
      */
-    public function __construct($body = '', $status = 200, $headers = array())
+    public function __construct($status = 200, array $headers = array(), $body = '')
     {
-        $this->parts[0] = $status;
+        $this->parts[0] = (int)$status;
         $this->parts[1] = $headers;
-        $this->parts[2] = $body;
+        $this->parts[2] = (array)$body;
     }
     
     /**
@@ -139,7 +135,7 @@ class Response extends ContainerAbstract
      * @param \pint\Response|array $response
      * @return array
      */
-    public static function write(Socket $socket, array $response)
+    public static function write(Socket $socket, $response)
     {
         if ($socket->isClosed()) {
             // throw new Exception("Response::write() failed because its socket is already closed.");
@@ -161,9 +157,9 @@ class Response extends ContainerAbstract
         // response line
         $buffer = \vsprintf("HTTP/1.1 %s %s\r\n", array($response[0], self::$status[$response[0]]));
         
-        \array_walk($response[1], function($value, $key) use ($buffer) {
+        foreach ($response[1] as $key => $value) {
             $buffer .= \vsprintf("%s: %s\r\n", array($key, $value));
-        });
+        }
         
         $buffer .= \vsprintf("\r\n%s", array($response[2]));
         $bytes = \strlen($buffer);

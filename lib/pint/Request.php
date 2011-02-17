@@ -16,7 +16,7 @@ class Request extends ContainerAbstract
      *
      * @var int
      */
-    public static $bytes = 1024;
+    public static $chunkSize = 1024;
     
     /**
      *
@@ -37,9 +37,9 @@ class Request extends ContainerAbstract
     protected static $filters = array(
         '\pint\Request\Filters::parseHeaders',
         '\pint\Request\Filters::parseRequestLine',
-        '\pint\Request\Filters::validateContentType',
         '\pint\Request\Filters::createServerEnv',
-        '\pint\Request\Filters::createPathInfoEnv'
+        '\pint\Request\Filters::createPathInfoEnv',
+//        '\pint\Request\Filters::validateContentType',
     );
     
     /**
@@ -56,25 +56,22 @@ class Request extends ContainerAbstract
     public static function parse(Socket $socket, array $config = array(), array $filters = null)
     {
         $instance = new self();
-        $input    = self::read($socket);
 
-        if(empty($input)) {
-            throw new Exception('Empty in input received from socket!');
+        if (!$input = self::read($socket)) {
+            return false;
         }
-        
+
         if(is_null($filters)) {
             $filters = self::$filters;  
         }
         
         foreach($filters as $func) {
-            if(is_string($func) && \strpos($func, '::') !== false) {
-                $func = \explode('::', $func);
-            }
+            $func = \explode('::', $func);
             try {
                 static::callFilter($func, array($instance, $input, $config));
             } catch(Exception $e) {
                 $instance->errormsg($e->getMessage());
-                break;
+                return false;
             }
         }
         
@@ -84,20 +81,54 @@ class Request extends ContainerAbstract
     /**
      * 
      * @param \pint\Socket $socket
-     * @return string
+     * @return array|false
      */
     public static function read(Socket $socket)
     {
-        $buffer = "";
-        while (substr($buffer, -4) !== "\r\n\r\n")
+        $headers = "";
+        $headersComplete = false;
+        $body = "";
+        while (true)
         {
-            $chunk = $socket->receive(self::$bytes);
-            if ($chunk === false) break; 
-            
-            $buffer .= $chunk;
+            $chunk = $socket->receive(self::$chunkSize);
+            if ($chunk === false) {
+                break;
+            } if (!$headersComplete) {
+                $parts = \explode("\r\n\r\n", $chunk);
+                $headers .= $parts[0];
+                if (isset($parts[1])) {
+                    $headersComplete = true;
+                    if (!\preg_match("#\r\nContent-Length: *([^\s]*)\r\n#", $headers, $match)) {
+                        if (!empty($parts[1])) {
+                            return false;
+                        }
+                        break;
+                    } else {
+                        if (!\preg_match("#^\d+$#", $match[1])) {
+                            return false;
+                        }
+                        $remaining = (int)$match[1];
+                        $remaining -= \strlen($parts[1]);
+                        $body .= $parts[1];
+                    }
+                }
+            } else {
+                $chunkLength = \strlen($chunk);
+                if ($chunkLength > $remaining) {
+                    $body .= substr($chunk, 0, $remaining);
+                    $remaining = 0;
+                } else {
+                    $body .= $chunk;
+                    $remaining -= $chunkLength;
+                }
+
+                if (!$remaining) {
+                    break;
+                }
+            }
         }
-    
-        return $buffer;
+
+        return array($headers, $body);
     }
     
     /**

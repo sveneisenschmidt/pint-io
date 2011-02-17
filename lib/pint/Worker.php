@@ -228,7 +228,6 @@ class Worker
      */
     function serve()
     {
-        $config = $this->server->config();
         if (!$this->socket->available() || !$socket = $this->socket->accept()) {
             return;
         }
@@ -237,7 +236,8 @@ class Worker
             array(\SOL_SOCKET, \SO_RCVTIMEO, array("sec" => 0, "usec" => 250)),
             array(\SOL_SOCKET, \SO_SNDTIMEO, array("sec" => 0, "usec" => 250))
         ));
-        
+
+        $config = $this->server->config();
         if(!$request = Request::parse($socket, $config)) {
             if($socket->isClosed()) {
                 return;

@@ -16,7 +16,7 @@ class Filters
      */
     static function parseHeaders(\pint\Request $request, $input, array $config = array())
     {
-        $raw   = @\http_parse_headers($input);
+        $raw   = @\http_parse_headers($input[0]);
         
         if($raw === false ||
            !\array_key_exists('Request Method', $raw) ||
@@ -46,7 +46,7 @@ class Filters
      */
     static function parseRequestLine(\pint\Request $request, $input, array $config = array())
     {
-        $lines = \explode("\r\n", $input);
+        $lines = \explode("\r\n", $input[0]);
         \preg_match("#^(?P<method>GET|HEAD|POST|PUT|OPTIONS|DELETE)\s+(?P<uri>[^\s]+)\s+HTTP/(?P<version>1\.\d)$#U", trim($lines[0]), $matches);
         if(!\array_key_exists('version', $matches)) {
             throw new \pint\Exception('Could not parse rrequest line!');
