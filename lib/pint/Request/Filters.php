@@ -143,9 +143,19 @@ class Filters
             $charset = 'UTF-8';         
         }
         
+        
+        print_r($request);
+        
+        return;
         switch($contenttype) {
         
             case 'application/octet-stream':
+                print 'application/octet-stream'; return;
+                throw new \pint\Exception('Not yet implemented!');
+            break;
+            
+            case 'multipart/form-data':
+                print 'multipart/form-data'; return;
                 throw new \pint\Exception('Not yet implemented!');
             break;
             
