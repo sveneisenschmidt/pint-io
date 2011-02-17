@@ -38,7 +38,8 @@ class Request extends ContainerAbstract
         '\pint\Request\Filters::parseHeaders',
         '\pint\Request\Filters::parseRequestLine',
         '\pint\Request\Filters::validateContentType',
-        '\pint\Request\Filters::createServerEnv'
+        '\pint\Request\Filters::createServerEnv',
+        '\pint\Request\Filters::createPathInfoEnv'
     );
     
     /**
@@ -52,7 +53,7 @@ class Request extends ContainerAbstract
      * @param \pint\Socket $socket
      * @return \pint\Request
      */
-    public static function parse(Socket $socket, array $filters = null)
+    public static function parse(Socket $socket, array $config = array(), array $filters = null)
     {
         $instance = new self();
         $input    = self::read($socket);
@@ -70,7 +71,7 @@ class Request extends ContainerAbstract
                 $func = \explode('::', $func);
             }
             try {
-                static::callFilter($func, array($instance, $input));
+                static::callFilter($func, array($instance, $input, $config));
             } catch(Exception $e) {
                 $instance->errormsg($e->getMessage());
                 break;

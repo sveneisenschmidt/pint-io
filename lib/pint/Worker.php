@@ -228,7 +228,7 @@ class Worker
      */
     function serve()
     {
-        
+        $config = $this->server->config();
         if (!$this->socket->available() || !$socket = $this->socket->accept()) {
             return;
         }
@@ -238,7 +238,7 @@ class Worker
             array(\SOL_SOCKET, \SO_SNDTIMEO, array("sec" => 0, "usec" => 250))
         ));
         
-        if(!$request = Request::parse($socket)) {
+        if(!$request = Request::parse($socket, $config)) {
             if($socket->isClosed()) {
                 return;
             } 
@@ -256,7 +256,6 @@ class Worker
         Response::write($socket, $response);    
         
         // die if we reached the request limit
-        $config = $this->server->config();
         if ($this->requests == $config["max_requests"])
         {
             $this->shutdown();
