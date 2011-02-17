@@ -90,14 +90,25 @@ class Request extends ContainerAbstract
         $headers = "";
         $headersComplete = false;
         $body = "";
+        $continued = false;
         while (true)
         {
             $chunk = $socket->receive(self::$chunkSize);
-            if ($chunk === false) {
+            if ($chunk === false || is_null($chunk)) {
                 break;
             } if (!$headersComplete) {
                 $parts = \explode("\r\n\r\n", $chunk);
                 $headers .= $parts[0];
+                
+                if (!is_array($headers) && \preg_match("#\r\nExpect: *100-continue\r\n#", $headers) && $continued == false) {
+                    $buffer = "HTTP/1.1 100 Continue\r\n";
+                    
+                    \socket_write($socket->resource(), $buffer, strlen($buffer));
+                    sleep(1);
+                    $continued = true;
+                    continue;
+                }        
+                
                 if (isset($parts[1])) {
                     $headersComplete = true;
                     if (!\preg_match("#\r\nContent-Length: *([^\s]*)\r\n#", $headers, $match)) {
@@ -129,7 +140,11 @@ class Request extends ContainerAbstract
                 }
             }
         }
-
+        
+        if(empty($headers)) {
+            return false;
+        }
+        
         return array($headers, $body);
     }
     

@@ -143,8 +143,7 @@ class Filters
             $charset = 'UTF-8';         
         }
         
-        
-        print_r($request);
+        var_dump($request);
         
         return;
         switch($contenttype) {
@@ -155,8 +154,9 @@ class Filters
             break;
             
             case 'multipart/form-data':
-                print 'multipart/form-data'; return;
-                throw new \pint\Exception('Not yet implemented!');
+                
+            var_dump($body);
+
             break;
             
             default:
