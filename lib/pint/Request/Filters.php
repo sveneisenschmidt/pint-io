@@ -110,14 +110,6 @@ class Filters
         
         $request['PATH_INFO'] = isset($parts[0]) ? $parts[0]    : $request['REQUEST_URI'];
         $request['QUERY_STRING'] = isset($parts[1]) ? $parts[1] : '';
-        
-        
-        
-        
-        print_r($request);
-        
-        
-        die();
     }
     
     
