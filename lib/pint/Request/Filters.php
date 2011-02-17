@@ -10,7 +10,7 @@ class Filters
     /**
      *
      * @param \pint\Request $request
-     * @param string $input
+     * @param array $input
      * @param array $config
      * @return void
      */
@@ -30,8 +30,7 @@ class Filters
         
         unset($raw['Request Method'], $raw['Request Url']);
         
-        foreach ($raw as $key => $value)
-        {
+        foreach ($raw as $key => $value) {
             $key = \preg_replace("#[^a-z]+#i", "_", $key);
             $request->offsetSet('HTTP_' . \strtoupper($key), $value);
         }
@@ -40,7 +39,7 @@ class Filters
     /**
      *
      * @param \pint\Request $request
-     * @param string $input
+     * @param array $input
      * @param array $config
      * @return void
      */
@@ -59,33 +58,39 @@ class Filters
     /**
      *
      * @param \pint\Request $request
-     * @param string $input
+     * @param array $input
      * @param array $config
      * @return void
      */
     static function validateContentType(\pint\Request $request, $input, array $config = array())
     {
-        if(\array_key_exists('Content-Type', $request) && !\in_array($request['REQUEST_METHOD'], array('POST', 'PUT'))) {
-            throw new \pint\Exception('Conten-Type header is set but wrong HTTP method, epxected POST or PUT');
-        }
+        $method         = $request['REQUEST_METHOD'];
+        $contenttypeset = isset($request['HTTP_CONTENT_TYPE']) && !empty($request['HTTP_CONTENT_TYPE']); 
         
-        if(\in_array($request['REQUEST_METHOD'], array('POST', 'PUT')) && !\array_key_exists('Content-Type', $request)) {
-            throw new \pint\Exception('Conten-Type header is not set but is needed by POST or PUT requests.');
+        
+        if($method == 'POST' || $method == 'PUT') {
+            if(!$contenttypeset) {
+                throw new \pint\Exception('POST or PUT request but not HTTP_CONTENT_TYPE header set');
+            }
+        } else {
+            if($contenttypeset) {
+                throw new \pint\Exception('No POST or PUT request but HTTP_CCONTENT_TYPE header set');
+            }
         }
     }
     
     /**
      *
      * @param \pint\Request $request
-     * @param string $input
+     * @param array $input
      * @param array $config
      * @return void
      */
     static function createServerEnv(\pint\Request $request, $input, array $config = array())
     {
-        $listen = explode(':', $request['HTTP_HOST']);
-        $host   = str_replace('http://', '', $listen[0]);
-        if(!isset($listen[1]) && !is_numeric($listen[1])) {
+        $listen = \explode(':', $request['HTTP_HOST']); // replace with $config['listen']
+        $host   = \str_replace('http://', '', $listen[0]);
+        if(!isset($listen[1]) && !\is_numeric($listen[1])) {
             $port = '-';
         } else {
             $port = $listen[1];
@@ -100,21 +105,52 @@ class Filters
     /**
      *
      * @param \pint\Request $request
-     * @param string $input
+     * @param array $input
      * @param array $config
      * @return void
      */
     static function createPathInfoEnv(\pint\Request $request, $input, array $config = array())
     {
-        $parts = explode('?', $request['REQUEST_URI']);
+        $parts = \explode('?', $request['REQUEST_URI']);
         
         $request['PATH_INFO'] = isset($parts[0]) ? $parts[0]    : $request['REQUEST_URI'];
         $request['QUERY_STRING'] = isset($parts[1]) ? $parts[1] : '';
     }
     
-    
-    
-    
-    
-    
+    /**
+     *
+     * @param \pint\Request $request
+     * @param array $input
+     * @param array $config
+     * @return void
+     */
+    static function processPostPutIf(\pint\Request $request, $input, array $config = array())
+    {
+        if($request['REQUEST_METHOD'] != 'POST' && $request['REQUEST_METHOD'] != 'PUT') {
+            return;
+        }       
+        
+        $body = $input[1];
+        if($request['REQUEST_METHOD'] == 'PUT' && 
+            (empty($body) || (int)$request['HTTP_CONTENT_LENGTH'] < 1)
+        ) {
+            throw new \pint\Exception('PUT request but empty body received!');
+        }   
+        
+        list($contenttype, $charset) = \preg_split('#\s*;\s*#', $request['HTTP_CONTENT_TYPE']);
+        
+        if(is_null($charset) && $contenttype != 'application/octet-stream') {
+            $charset = 'UTF-8';         
+        }
+        
+        switch($contenttype) {
+        
+            case 'application/octet-stream':
+                throw new \pint\Exception('Not yet implemented!');
+            break;
+            
+            default:
+                $request['PINT_BODY'] = $body;
+        }
+    }
 }

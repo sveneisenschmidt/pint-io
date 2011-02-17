@@ -238,6 +238,8 @@ class Worker
         ));
 
         $config = $this->server->config();
+        $this->requests++;
+        
         if(!$request = Request::parse($socket, $config)) {
             if($socket->isClosed()) {
                 return;
@@ -245,7 +247,6 @@ class Worker
                 
             $response = Response::badRequest();
         } else {
-            $this->requests++;
             try {
                 $response = $this->server()->stack()->call($request);
             } catch (\Exception $e) {

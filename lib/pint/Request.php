@@ -39,7 +39,9 @@ class Request extends ContainerAbstract
         '\pint\Request\Filters::parseRequestLine',
         '\pint\Request\Filters::createServerEnv',
         '\pint\Request\Filters::createPathInfoEnv',
-//        '\pint\Request\Filters::validateContentType',
+        '\pint\Request\Filters::validateContentType',
+        '\pint\Request\Filters::processPostPutIf',
+        
     );
     
     /**
