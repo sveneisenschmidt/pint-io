@@ -64,7 +64,7 @@ class Socket
      */
     public function accept()
     {
-        $child = \stream_socket_accept($this->resource, 1);
+        $child = @\stream_socket_accept($this->resource, -1);
         
         if(is_resource($child)) {
             $child = ChildSocket::fromSocket($child);
