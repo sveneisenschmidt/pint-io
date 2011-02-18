@@ -14,6 +14,229 @@ class Socket
     
     /**
      *
+     * @var int
+     */
+    protected $timeout = -1;
+    
+    /**
+     *
+     * @param int $domain 
+     * @param int $type 
+     * @param int $protocol 
+     * @return void
+     */
+    public static function create($listen)
+    {
+        $socket = \stream_socket_server($listen, $a, $b);
+        return new static($socket);
+    }
+    
+    /**
+     * 
+     * Creates a new pint\Socket instance with an already intialized socket
+     *
+     * @param resource $socket 
+     * @return void
+     */
+    public static function fromSocket($socket)
+    {
+        return new static($socket);
+        
+    }
+    
+    /**
+     *
+     * @param resource $resource 
+     * @return void
+     */
+    public function __construct($resource)
+    {
+        if(!\is_resource($resource)) {
+            throw new Exception('$resource is no valid socket!');
+        }
+        
+        $this->resource = $resource;        
+    }
+    
+    /**
+     *
+     * @return void
+     */
+    public function accept()
+    {
+        $child = \stream_socket_accept($this->resource, 1);
+        
+        if(is_resource($child)) {
+            $child = ChildSocket::fromSocket($child);
+            
+            return $child;
+        }
+        
+        return false;
+    }
+
+    /**
+     *
+     * @return boolean
+     */
+    public function available()
+    {
+        return @\stream_select($r = array($this->resource), $w = null, $x = null, 1);
+    }
+    
+    /**
+     *
+     * @return boolean
+     */
+    public function nonblock($block = 0)
+    {
+        return \stream_set_blocking($this->resource, $block);
+    }
+    
+    /**
+     *
+     * @return boolean
+     */
+    public function close()
+    {
+        return \fclose($this->resource);
+    }
+    
+    /**
+     *
+     * @return boolean
+     */
+    public function isClosed()
+    {
+        return !\is_resource($this->resource);
+    }
+    
+    /**
+     *
+     * @return int
+     */
+    public function getLastErrorCode()
+    {
+        return $this->errorno;
+    }
+
+    /**
+     *
+     * @return string
+     */
+    public function getLastErrorMessege()
+    {
+        return $this->errorstr;
+    }
+
+    /**
+     *
+     * @return void
+     */
+    public function clearError()
+    {
+        $this->errorstr = null;
+        $this->errorno  = null;
+    }
+    
+    /**
+     *
+     * @return resource
+     */
+    public function resource()
+    {
+        return $this->resource;
+    }
+    
+    /**
+     *
+     * @return resource
+     */
+    public function meta()
+    {
+        return \stream_get_meta_data($this->resource);
+    }
+}
+
+
+class ChildSocket extends Socket
+{
+    
+    /**
+     *
+     * @return string
+     */
+    public function receive($bytes)
+    {
+        return \stream_socket_recvfrom($this->resource, $bytes);
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function fread($bytes)
+    {
+        return \fread($this->resource, $bytes);
+    }
+    
+    /**
+     *
+     * @return boolean
+     */
+    public function write($buffer, $length)
+    {
+        return \fwrite($this->resource, $buffer, $length);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Socket_OLD
+{
+    /**
+     *
+     * @var resource#id
+     */
+    protected $resource = null;
+    
+    /**
+     *
      * @param int $domain 
      * @param int $type 
      * @param int $protocol 
@@ -157,42 +380,6 @@ class Socket
     public function bind($host = null, $port = null)
     {
         return \socket_bind($this->resource, $host, $port);
-    }
-    
-    /**
-     *
-     * @return boolean
-     */
-    public function isClosed()
-    {
-        return !\is_resource($this->resource);
-    }
-    
-    /**
-     *
-     * @return int
-     */
-    public function getLastErrorCode()
-    {
-        return \socket_last_error($this->resource);
-    }
-
-    /**
-     *
-     * @return string
-     */
-    public function getLastErrorMessege()
-    {
-        return \socket_strerror($this->getLastErrorCode());
-    }
-
-    /**
-     *
-     * @return void
-     */
-    public function clearError()
-    {
-        return \socket_clear_error($this->resource);
     }
 
     /**

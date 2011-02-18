@@ -67,7 +67,7 @@ class Filters
         $method         = $request['REQUEST_METHOD'];
         $contenttypeset = isset($request['HTTP_CONTENT_TYPE']) && !empty($request['HTTP_CONTENT_TYPE']); 
         
-        if(is_array($request['HTTP_CONTENT_TYPE'])) {
+        if($contenttypeset && is_array($request['HTTP_CONTENT_TYPE'])) {
             $request['HTTP_CONTENT_TYPE'] = $request['HTTP_CONTENT_TYPE'][0];
         }
         
@@ -141,7 +141,6 @@ class Filters
         }   
         
         list($contenttype, $rest) = \preg_split('#\s*;\s*#', $request['HTTP_CONTENT_TYPE']);
-        
         
         switch($contenttype) {
         

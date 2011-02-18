@@ -176,7 +176,6 @@ class Response extends ContainerAbstract
             }
         }
 
-        $socket->option(\SOL_SOCKET, \SO_LINGER, array("l_onoff" => 1, "l_linger" => 1));
         $socket->close();
     } 
 }

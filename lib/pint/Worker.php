@@ -228,14 +228,9 @@ class Worker
      */
     function serve()
     {
-        if (!$this->socket->available() || !$socket = $this->socket->accept()) {
+        if (!is_int($this->socket->available()) || $this->socket->available() == 0  || !$socket = $this->socket->accept()) {
             return;
         }
-        
-        $socket->options(array(
-            array(\SOL_SOCKET, \SO_RCVTIMEO, array("sec" => 0, "usec" => 250)),
-            array(\SOL_SOCKET, \SO_SNDTIMEO, array("sec" => 0, "usec" => 250))
-        ));
 
         $config = $this->server->config();
         $this->requests++;
@@ -254,6 +249,7 @@ class Worker
             }
         }
          
+        print_r($request);
         Response::write($socket, $response);    
         
         // die if we reached the request limit

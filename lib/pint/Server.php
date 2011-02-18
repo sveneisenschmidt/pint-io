@@ -165,17 +165,11 @@ class Server
         list($host, $port) = \explode(":", $this->config["listen"]);
 
         
-        $this->socket = Socket::create(AF_INET, SOCK_STREAM, getprotobyname("tcp"));
-        $this->socket->options(array(
-            array(SOL_SOCKET, SO_REUSEADDR, 1),
-            array(SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 250)), // cancel reads and writes after 250 microseconds
-            array(SOL_SOCKET, SO_SNDTIMEO, array("sec" => 0, "usec" => 250))
-        ));
-        $this->socket->bind($host, $port);
-        $this->socket->nonblock(); // enable non-blocking mode. socket_accept() returns immediately
+        $this->socket = Socket::create($this->config["listen"]);
+        $this->socket->nonblock();
         
         echo "Listening on http://" . $this->config["listen"] . "\n";
-        $this->socket->listen();
+
 
 
         $this->config["before_fork"]($this);

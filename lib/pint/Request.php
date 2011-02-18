@@ -73,6 +73,8 @@ class Request extends ContainerAbstract
                 static::callFilter($func, array($instance, $input, $config));
             } catch(Exception $e) {
                 $instance->errormsg($e->getMessage());
+        
+                die($e->getMessage() . "\r\n");
                 return false;
             }
         }
@@ -87,59 +89,49 @@ class Request extends ContainerAbstract
      */
     public static function read(Socket $socket)
     {
-        $headers = "";
-        $headersComplete = false;
-        $body = "";
-        $continued = false;
-        while (true)
-        {
+        $headers = $body = "";
+        $headersComplete = $bodyComplete = false;
+        $toRead = $bodyLength = 0;
+        
+        while (!$headersComplete) {
             $chunk = $socket->receive(self::$chunkSize);
             if ($chunk === false || is_null($chunk)) {
                 break;
-            } if (!$headersComplete) {
-                $parts = \explode("\r\n\r\n", $chunk);
-                $headers .= $parts[0];
+            } 
+            
+            $parts = \explode("\r\n\r\n", $chunk);
+            $headers .= $parts[0];
+            
+            if(isset($parts[1])) {
+                $headersComplete = true;
+                $body .= $parts[1];
                 
-                if (@\preg_match("#\r\nExpect: *100-continue\r\n#", $headers) && $continued == false) {
-                    $buffer = "HTTP/1.1 100 Continue\r\n";
-                    
-                    \socket_write($socket->resource(), $buffer, strlen($buffer));
-                    usleep(1000000);
-                    $continued = true;
-                    continue;
-                }        
-                
-                if (isset($parts[1])) {
-                    $headersComplete = true;
-                    if (!\preg_match("#\r\nContent-Length: *([^\s]*)\r\n#", $headers, $match)) {
-                        if (!empty($parts[1])) {
-                            return false;
-                        }
-                        break;
-                    } else {
-                        if (!\preg_match("#^\d+$#", $match[1])) {
-                            return false;
-                        }
-                        $remaining = (int)$match[1];
-                        $remaining -= \strlen($parts[1]);
-                        $body .= $parts[1];
-                    }
-                }
-            } else {
-                $chunkLength = \strlen($chunk);
-                if ($chunkLength > $remaining) {
-                    $body .= substr($chunk, 0, $remaining);
-                    $remaining = 0;
-                } else {
-                    $body .= $chunk;
-                    $remaining -= $chunkLength;
-                }
+                break;
+            }
+        }
+        
+        if (\preg_match("#\r\nContent-Length: *([^\s]*)\r\n#", $headers, $match)) {
+            if(\preg_match("#^\d+$#", $match[1])) {
+                $bodyLength = $match[1];
+            }
 
-                if (!$remaining) {
+            $bodyComplete = (strlen($body) == $bodyLength);
+        } 
+        
+        if(!$bodyComplete) {
+            $toRead   = ($bodyLength - strlen($body));
+            $beenRead = 0;
+            
+            while($toRead > 0) {
+                $body     .= $socket->receive(self::$chunkSize); 
+                $beenRead += self::$chunkSize;
+                $toRead   -= self::$chunkSize;
+                
+                if($toRead < 0) {
                     break;
                 }
             }
-        }
+        }        
         
         if(empty($headers)) {
             return false;
