@@ -149,15 +149,23 @@ class Filters
                 throw new \pint\Exception('Not yet implemented!');
             break;
             
+            //see @ http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
             case 'multipart/form-data':
                 if(strpos($rest, 'boundary=') === false) {
                     throw new \pint\Exception('Could not detect boundary!');
                 }
                 
-                //see @ http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
-                $boundary = str_replace('boundary=', '', $rest);
+                // $hash = \preg_match("##", $rest);
                 
-                var_dump(strpos($body, $boundary));
+                var_dump($body);
+                
+                //          ----------------------------bdac0305ec93  ----------------------------bdac0305ec93
+                // boundary=----------------------------bdac0305ec93------------------------------bdac0305ec93
+                
+                
+                
+                die();
+                
 
             break;
             

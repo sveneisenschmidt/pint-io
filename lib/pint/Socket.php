@@ -177,6 +177,7 @@ class ChildSocket extends Socket
      */
     public function fread($bytes)
     {
+        stream_set_timeout($this->resource, 1);
         return \fread($this->resource, $bytes);
     }
     

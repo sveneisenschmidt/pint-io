@@ -249,7 +249,6 @@ class Worker
             }
         }
          
-        print_r($request);
         Response::write($socket, $response);    
         
         // die if we reached the request limit

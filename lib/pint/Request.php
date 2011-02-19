@@ -89,45 +89,84 @@ class Request extends ContainerAbstract
      */
     public static function read(Socket $socket)
     {
-        $headers = $body = "";
-        $headersComplete = $bodyComplete = false;
+        $headers = $body = $expectBuffer = "";
         $toRead = $bodyLength = 0;
         
+        $headersComplete = false;
+        $bodyComplete    = true;
+        
+        $continued = false;
+        
+        // goto mark
+        headers:
+        
+        if($continued) {
+            $expectBuffer .= "\r\n";}
+            
         while (!$headersComplete) {
             $chunk = $socket->receive(self::$chunkSize);
             if ($chunk === false || is_null($chunk)) {
                 break;
             } 
-            
             $parts = \explode("\r\n\r\n", $chunk);
             $headers .= $parts[0];
+            
+            // when sending a "HTTP/1.1 100 Continue" you get some new headers back which are part 
+            // of the Content Length!
+            if($continued) {
+                $expectBuffer .= $parts[0];
+            }
             
             if(isset($parts[1])) {
                 $headersComplete = true;
                 $body .= $parts[1];
-                
                 break;
             }
         }
+        if($continued) {
+            $expectBuffer .= "\r\n";}
         
-        if (\preg_match("#\r\nContent-Length: *([^\s]*)\r\n#", $headers, $match)) {
+        // test if an expect, 100-continue header is set, welcome to the hell of HTTP!
+        if(\preg_match("#\r\nExpect: *100-continue\r\n#", $headers) && $continued == false){
+        
+            // okay, we got an expect header, normally we head to check if the headers are correct
+            // atm we are too lazy and just returning 'HTTP/1.1 100 Continue'
+            $buffer  = "HTTP/1.1 100 Continue\r\n";
+            $success = $socket->write($buffer, \strlen($buffer));
+            
+            if(!is_int($success)) {
+                return false;
+            }
+            
+            // now the client sents some additional headers, this makes everything the most complicated
+            // so we need to jump back to the top and parse the additional headers
+            $headersComplete = false;
+            $continued = true;
+            goto headers;
+        }
+        
+            
+        if (\preg_match("#\r\nContent-Length: *([^\s]*)#", $headers, $match)) {
             if(\preg_match("#^\d+$#", $match[1])) {
-                $bodyLength = $match[1];
+                $bodyLength  = (int)$match[1] - strlen($body) - strlen($expectBuffer);
             }
 
             $bodyComplete = (strlen($body) == $bodyLength);
         } 
         
         if(!$bodyComplete) {
-            $toRead   = ($bodyLength - strlen($body));
-            $beenRead = 0;
-            
-            while($toRead > 0) {
-                $body     .= $socket->receive(self::$chunkSize); 
-                $beenRead += self::$chunkSize;
-                $toRead   -= self::$chunkSize;
+            $toRead  = $bodyLength;
+            while(true) {
+                $chunk = $socket->receive(self::$chunkSize);
+                if ($chunk === false || is_null($chunk) || strlen($chunk) == 0) {
+                    break;
+                } 
                 
-                if($toRead < 0) {
+            
+                $body   .= $chunk;
+                $toRead -= \strlen($chunk);
+                
+                if($toRead <= 0) {
                     break;
                 }
             }
