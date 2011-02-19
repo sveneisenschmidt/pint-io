@@ -95,6 +95,7 @@ class Request extends ContainerAbstract
         $headersComplete = false;
         $bodyComplete    = true;
         
+        
         $continued = false;
         
         // goto mark
@@ -110,6 +111,7 @@ class Request extends ContainerAbstract
             } 
             $parts = \explode("\r\n\r\n", $chunk);
             $headers .= $parts[0];
+            
             
             // when sending a "HTTP/1.1 100 Continue" you get some new headers back which are part 
             // of the Content Length!
@@ -142,14 +144,16 @@ class Request extends ContainerAbstract
             // so we need to jump back to the top and parse the additional headers
             $headersComplete = false;
             $continued = true;
-            goto headers;
         }
         
             
-        if (\preg_match("#\r\nContent-Length: *([^\s]*)#", $headers, $match)) {
+        if (\preg_match("#\r\nContent-Length: *([^\s]*)#", $headers, $match) ||
+            \preg_match("#\r\nContent-Length: *([^\s]*)#", $body, $match)
+        ) {
             if(\preg_match("#^\d+$#", $match[1])) {
-                $bodyLength  = (int)$match[1] - strlen($body) - strlen($expectBuffer);
+                $bodyLength  = (int)$match[1] - strlen($body);
             }
+
 
             $bodyComplete = (strlen($body) == $bodyLength);
         } 
@@ -161,7 +165,6 @@ class Request extends ContainerAbstract
                 if ($chunk === false || is_null($chunk) || strlen($chunk) == 0) {
                     break;
                 } 
-                
             
                 $body   .= $chunk;
                 $toRead -= \strlen($chunk);
@@ -170,7 +173,12 @@ class Request extends ContainerAbstract
                     break;
                 }
             }
-        }        
+        }
+        
+        var_dump($headers);
+        var_dump(strlen($body));
+        die();
+                
         
         if(empty($headers)) {
             return false;
