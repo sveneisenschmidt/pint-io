@@ -101,22 +101,7 @@ class PostPutFilter
                 $headers['Content-Type'] = 'multipart/' . $ctype;
             }
             
-            if($headers['Content-Type'] == 'multipart/form-data' && true == false) {
-                if(!preg_match('#form-data;\s*name=".*"(?:filename=".*")?(?:\r\n\r\n)?#', $headers['Content-Disposition'], $matches)) {
-                    throw new \pint\Exception("Could not parse Content-Disposition: {$headers['Content-Disposition']}");
-                }
-                
-                if(!$position = strpos($part, $matches[0])) {
-                    throw new \pint\Exception("Could not extract body!");
-                }
-                
-                $body = substr($part, $position + strlen($matches[0]));
-                $headers['Content-Disposition'] = $matches[0];
-                
-            }
-            
             list($raw, $body) = explode("\r\n\r\n", trim($part, "\r\n"));
-            
             $multiparts[] = array(
                 'headers' => $headers,
                 'body'    => $body
