@@ -115,24 +115,8 @@ class PostPutFilter
                 
             }
             
-            $subparts = explode("\r\n\r\n", trim($part, "\r\n"));
+            list($raw, $body) = explode("\r\n\r\n", trim($part, "\r\n"));
             
-            if(count($subparts) < 2) {
-                
-                
-                var_dump(explode("\r", $part));
-                die();
-                $subpart = $part;
-                foreach($headers as $name => $value) {
-                    $subpart = str_replace($name . ': ' . $value, '', $subpart);
-                }
-                
-                
-            } else {
-                $body = $subparts[1];    
-            }
-            
-            // ;   
             $multiparts[] = array(
                 'headers' => $headers,
                 'body'    => $body
@@ -197,9 +181,6 @@ class PostPutFilter
                 break;
             }
         }
-        
-        print_r($request);
-        die();
     }
     
     /**

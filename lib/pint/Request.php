@@ -104,9 +104,12 @@ class Request extends ContainerAbstract
             $parts = \explode("\r\n\r\n", $chunk);
             $headers .= $parts[0];
             
-            if(isset($parts[1])) {
+            if(count($parts) > 1) {
                 $headersComplete = true;
-                $body .= $parts[1];
+                unset($parts[0]);
+                foreach($parts as $part) {
+                    $body .= "\r\n\r\n" . $part;
+                }
                 break;
             }
         }
