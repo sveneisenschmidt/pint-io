@@ -40,7 +40,7 @@ class Request extends ContainerAbstract
         '\pint\Request\Filters::createServerEnv',
         '\pint\Request\Filters::createPathInfoEnv',
         '\pint\Request\Filters::validateContentType',
-        '\pint\Request\Filters::processPostPutIf',
+        '\pint\Request\Filters\PostPutFilter::parse',
         
     );
     
@@ -138,7 +138,6 @@ class Request extends ContainerAbstract
             $bodyLength  -= ($continued == true) ? strlen($body) : strlen($headers);
             $bodyComplete = (strlen($body) == $bodyLength);
         } 
-        
         
         if(!$bodyComplete) {
             $toRead  = $bodyLength;
