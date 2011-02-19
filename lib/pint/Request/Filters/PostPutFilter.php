@@ -142,7 +142,6 @@ class PostPutFilter
                         throw new \pint\Exception("Could not parse Content-Disposition: {$disposition}");
                     }
                     
-                    list($key, $path) = array($matches[1], $matches[2]);
                     $tmpfile = self::saveTempFile($body);
                     
                     if(!isset($request['PINT_FILES'])) {
@@ -152,11 +151,18 @@ class PostPutFilter
                     }
                     
                     $files[] = array(
-                        'name'     => basename($path),
+                        'name'     => basename($matches[2]),
                         'type'     => mime_content_type($tmpfile),
                         'tmp_name' => $tmpfile,
                         'size'     => filesize($tmpfile),
-                        'error'    => null
+                        'error'    => null,
+                        
+                        // maybe this will be later neccessay, maybe used by an shutdown function
+                        // we could also register this temp file to a static class which cleans up
+                        // the file on shutdown (not really shutdown, instead on request finish)
+                        'clear'    => function() use ($tmpfile) {
+                            return @unlink($tmpfile);
+                        }
                     );
                     
                     $request['PINT_FILES'] = $files;

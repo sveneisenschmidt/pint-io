@@ -126,8 +126,7 @@ class Request extends ContainerAbstract
                 return false;
             }
             
-            // now the client sents some additional headers, this makes everything the most complicated
-            // so we need to jump back to the top and parse the additional headers
+            // now the client sents some additional headers
             $continued = true;
         }
         
