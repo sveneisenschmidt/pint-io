@@ -135,8 +135,7 @@ class PostPutFilter
                     $request['PINT_FIELDS'] = $fields;
                     
                 break;
-                
-                // binary data
+                                
                 default:
                 
                     if(!preg_match('#.*;\s*name="(.*)";\s*filename="(.*)"#', $disposition, $matches)) {
@@ -144,8 +143,6 @@ class PostPutFilter
                     }
                     
                     list($key, $path) = array($matches[1], $matches[2]);
-                    
-                    
                     $tmpfile = self::saveTempFile($body);
                     
                     if(!isset($request['PINT_FILES'])) {
@@ -178,7 +175,7 @@ class PostPutFilter
         $tmpfile = sys_get_temp_dir() . '/pint_tmp_' . \md5(\uniqid() . time());
         $handle = fopen($tmpfile, 'w');
         if(!$handle || !@fwrite($handle, $body)) {
-            throw new \pint\Exception("Could not write tmp file for PUT/POST: {$tmpfile}. Error: ");
+            throw new \pint\Exception("Could not write tmp file for PUT/POST: {$tmpfile}.");
         }
         fclose($handle);
         return $tmpfile;
