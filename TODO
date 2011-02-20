@@ -6,7 +6,9 @@
   sven: stimme überein
 * Use a POSIX FIFO pipe for pinging
 * Have a look at Server->maintainWorkers
-
+* Cookie Handling in pint\Adapters\SapiAdapter
+* Transform array strcuture with nested names in \pint\request::(postParams|files)
+* Error handling in SapiAdapter
 
 
 Done:

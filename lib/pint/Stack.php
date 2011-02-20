@@ -2,6 +2,9 @@
 
 namespace pint;
 
+use \pint\Exception,
+    \pint\App\AppInterface;
+
 class Stack
 {
     protected $middleware = array();
@@ -26,13 +29,17 @@ class Stack
         }
     }
 
-    function build()
+    function build($env)
     {
         if (!$this->app()) {
-            $this->app(new App());
+            throw new Exception('No app specified!');
         }
         
         $stack = $this->buildCallable($this->app());
+        if(method_exists($stack, 'process')) {
+            call_user_func(array($stack, 'process'), $env);
+        }
+        
         foreach ($this->middleware() as $mw)
         {
             $outer = $this->buildCallable($mw[0], $mw[1]);
@@ -49,6 +56,7 @@ class Stack
     function buildCallable($src, $options = null)
     {
         $obj = is_object($src) ? $src : new $src($options);
+        
         if (!method_exists($obj, "call"))
         {
             throw new Exception(get_class($obj) . " does not have a call() method.");
@@ -59,6 +67,6 @@ class Stack
 
     function call($env)
     {
-        return $this->build()->call($env);
+        return $this->build($env)->call($env);
     }
 }

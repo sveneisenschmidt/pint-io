@@ -252,4 +252,84 @@ class Request extends ContainerAbstract
         throw new \pint\Exception('No allowed to unset any values!');
     }
     
+    /**
+     * 
+     * @return array
+     */
+    public function server($filter = true) 
+    {
+        return $this->toArray($filter);        
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function toArray($filter = false) 
+    {
+        if($filter === false) {
+            return $this->env;
+        }
+        
+        $server = array();
+        foreach($this->env as $key => $value) {
+            if(substr($key, 0, 5) != 'PINT_') {
+                $server[$key] = $value;
+            }
+        }        
+        return $server;      
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function paramsGet() 
+    {
+        if(!isset($this->env['QUERY_STRING']) || 
+           (isset($this->env['QUERY_STRING']) && empty($this->env['QUERY_STRING']))
+        ) {
+            return array();
+        }     
+        
+        @\parse_str($this->env['QUERY_STRING'] , $params);
+        return $params;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function paramsPost() 
+    {
+        if(!isset($this->env['PINT_FIELDS']) || 
+           (isset($this->env['PINT_FIELDS']) && !\is_array($this->env['PINT_FIELDS']))
+        ) {
+            return array();
+        } 
+        
+        // Note:
+        // we have to transform fields with nested names 
+        
+        return $this->env['PINT_FIELDS'];   
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function files() 
+    {
+        if(!isset($this->env['PINT_FILES']) || 
+           (isset($this->env['PINT_FILES']) && !\is_array($this->env['PINT_FILES']))
+        ) {
+            return array();
+        } 
+        
+        // Note:
+        // we have to transform files with nested names 
+        
+        return $this->env['PINT_FILES'];   
+    }
+    
 }

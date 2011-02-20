@@ -2,8 +2,10 @@
 
 namespace example;
 
-class App {
-    function call($env)
+class App extends \pint\App\AppAbstract {
+    
+    
+    function call($env) 
     {
         return array(
             200,
@@ -11,4 +13,6 @@ class App {
             "You asked for " . $env["REQUEST_URI"]
         );
     }
+    
+    
 }

@@ -17,7 +17,7 @@ return array(
 
         // both accept a string, object or closure
         $server->stack()->middleware("pint\Middleware\Logging");
-        $server->stack()->app("example\App");
+        $server->stack()->app("example\ScriptApp");
     },
     "before_fork" => function($server) {
         echo "[master] Forking workers\n";
