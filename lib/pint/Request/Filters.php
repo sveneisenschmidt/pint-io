@@ -2,8 +2,8 @@
 
 namespace pint\Request;
 
-use \pint\Exception;
-
+use \pint\Exception,
+    \pint\Socket\ChildSocket;
 
 class Filters
 {
@@ -11,10 +11,11 @@ class Filters
      *
      * @param \pint\Request $request
      * @param array $input
+     * @param \pint\Socket\ChildSocket $socket
      * @param array $config
      * @return void
      */
-    static function parseHeaders(\pint\Request $request, $input, array $config = array())
+    static function parseHeaders(\pint\Request $request, $input, ChildSocket $socket, array $config = array())
     {
         $raw   = @\http_parse_headers($input[0]);
         
@@ -40,10 +41,11 @@ class Filters
      *
      * @param \pint\Request $request
      * @param array $input
+     * @param \pint\Socket\ChildSocket $socket
      * @param array $config
      * @return void
      */
-    static function parseRequestLine(\pint\Request $request, $input, array $config = array())
+    static function parseRequestLine(\pint\Request $request, $input, ChildSocket $socket, array $config = array())
     {
         $lines = \explode("\r\n", $input[0]);
         \preg_match("#^(?P<method>GET|HEAD|POST|PUT|OPTIONS|DELETE)\s+(?P<uri>[^\s]+)\s+HTTP/(?P<version>1\.\d)$#U", trim($lines[0]), $matches);
@@ -59,10 +61,11 @@ class Filters
      *
      * @param \pint\Request $request
      * @param array $input
+     * @param \pint\Socket\ChildSocket $socket
      * @param array $config
      * @return void
      */
-    static function validateContentType(\pint\Request $request, $input, array $config = array())
+    static function validateContentType(\pint\Request $request, $input, ChildSocket $socket, array $config = array())
     {
         $method         = $request['REQUEST_METHOD'];
         $contenttypeset = isset($request['HTTP_CONTENT_TYPE']) && !empty($request['HTTP_CONTENT_TYPE']); 
@@ -89,7 +92,7 @@ class Filters
      * @param array $config
      * @return void
      */
-    static function createServerEnv(\pint\Request $request, $input, array $config = array())
+    static function createServerEnv(\pint\Request $request, $input, ChildSocket $socket, array $config = array())
     {
         list($host, $port) = explode(':', $config['listen']);
         
@@ -107,10 +110,35 @@ class Filters
      *
      * @param \pint\Request $request
      * @param array $input
+     * @param \pint\Socket\ChildSocket $socket
      * @param array $config
      * @return void
      */
-    static function createPathInfoEnv(\pint\Request $request, $input, array $config = array())
+    static function createRemoteEnv(\pint\Request $request, $input, ChildSocket $socket, array $config = array())
+    {
+        $remote = \stream_socket_get_name($socket->resource(), true);
+        list($addr, $port) = explode(':', $remote);
+        
+        
+        $request->offsetSet('REMOTE_ADDR',  $addr);
+        $request->offsetSet('REMOTE_PORT',  $port);
+        $request->offsetSet('SERVER_HOST',  gethostbyaddr($addr));
+        
+        
+        
+        print_r($request);
+        die(); 
+    }
+    
+    /**
+     *
+     * @param \pint\Request $request
+     * @param array $input
+     * @param \pint\Socket\ChildSocket $socket
+     * @param array $config
+     * @return void
+     */
+    static function createPathInfoEnv(\pint\Request $request, $input, ChildSocket $socket, array $config = array())
     {
         $parts = \explode('?', $request['REQUEST_URI']);
         

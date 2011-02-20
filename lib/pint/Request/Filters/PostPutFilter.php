@@ -2,7 +2,8 @@
 
 namespace pint\Request\Filters;
 
-use \pint\Exception;
+use \pint\Exception,
+    \pint\Socket\ChildSocket;
 
 
 class PostPutFilter
@@ -11,10 +12,11 @@ class PostPutFilter
      *
      * @param \pint\Request $request
      * @param array $input
+     * @param \pint\Socket\ChildSocket $socket
      * @param array $config
      * @return void
      */
-    public static function parse(\pint\Request $request, $input, array $config = array())
+    public static function parse(\pint\Request $request, $input, ChildSocket $socket, array $config = array())
     {
         list($headers, $body) = array($input[0], $input[1]);
         
@@ -35,10 +37,11 @@ class PostPutFilter
      *
      * @param \pint\Request $request
      * @param array $input
+     * @param \pint\Socket\ChildSocket $socket
      * @param array $config
      * @return void
      */
-    protected static function process (\pint\Request $request, $input, array $config = array())
+    protected static function process (\pint\Request $request, $input, ChildSocket $socket, array $config = array())
     {
         list($contenttype)    = \preg_split('#\s*;\s*#', $request['HTTP_CONTENT_TYPE']);
         
@@ -63,10 +66,11 @@ class PostPutFilter
      *
      * @param \pint\Request $request
      * @param array $input
+     * @param \pint\Socket\ChildSocket $socket
      * @param array $config
      * @return void
      */
-    protected static function processMultiPartFormData (\pint\Request $request, $input, array $config = array())
+    protected static function processMultiPartFormData (\pint\Request $request, $input, ChildSocket $socket, array $config = array())
     {
         list($headers, $body) = array($input[0], $input[1]);
         list($contenttype)    = \preg_split('#\s*;\s*#', $request['HTTP_CONTENT_TYPE']);

@@ -4,8 +4,6 @@
   ob die content length des request (POST/PUT) das speicherlimit überschreitet
   vorschlag lars: master killt worker sobald sie mehr als x mb ram verbrauchen
   sven: stimme überein
-* Connection->write should set the Content-Length header
-* Request env should also contain SERVER_ADDR, REMOTE_ADDR and REMOTE_PORT
 * Use a POSIX FIFO pipe for pinging
 * Have a look at Server->maintainWorkers
 
@@ -14,3 +12,5 @@
 Done:
 
 * SERVER_NAME from gethostname(), SERVER_PORT from config
+* Request env should also contain SERVER_ADDR, REMOTE_ADDR and REMOTE_PORT
+* Connection->write should set the Content-Length header (already implemented)

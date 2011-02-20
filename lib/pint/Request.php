@@ -4,6 +4,7 @@ namespace pint;
 
 use \pint\Exception,
     \pint\Socket,
+    \pint\Socket\ChildSocket,
     \pint\Mixin\ContainerAbstract;
 
 /**
@@ -38,6 +39,7 @@ class Request extends ContainerAbstract
         '\pint\Request\Filters::parseHeaders',
         '\pint\Request\Filters::parseRequestLine',
         '\pint\Request\Filters::createServerEnv',
+        '\pint\Request\Filters::createRemoteEnv',
         '\pint\Request\Filters::createPathInfoEnv',
         '\pint\Request\Filters::validateContentType',
         '\pint\Request\Filters\PostPutFilter::parse',
@@ -52,10 +54,10 @@ class Request extends ContainerAbstract
     
     /**
      * 
-     * @param \pint\Socket $socket
+     * @param \pint\Socket\ChildSocket $socket
      * @return \pint\Request
      */
-    public static function parse(Socket $socket, array $config = array(), array $filters = null)
+    public static function parse(ChildSocket $socket, array $config = array(), array $filters = null)
     {
         $instance = new self();
 
@@ -70,7 +72,7 @@ class Request extends ContainerAbstract
         foreach($filters as $func) {
             $func = \explode('::', $func);
             try {
-                static::callFilter($func, array($instance, $input, $config));
+                static::callFilter($func, array($instance, $input, $socket, $config));
             } catch(Exception $e) {
                 $instance->errormsg($e->getMessage());
         
@@ -128,7 +130,7 @@ class Request extends ContainerAbstract
             
             // now the client sents some additional headers
             $continued = true;
-        }
+        }  
         
         if (\preg_match("#\r\nContent-Length: *([^\s]*)#", $headers, $match) ||
             \preg_match("#\r\nContent-Length: *([^\s]*)#", $body, $match)
