@@ -123,11 +123,6 @@ class Filters
         $request->offsetSet('REMOTE_ADDR',  $addr);
         $request->offsetSet('REMOTE_PORT',  $port);
         $request->offsetSet('SERVER_HOST',  gethostbyaddr($addr));
-        
-        
-        
-        print_r($request);
-        die(); 
     }
     
     /**
