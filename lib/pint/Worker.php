@@ -5,6 +5,7 @@ namespace pint;
 use \pint\Connection,
     \pint\Server,
     \pint\Socket,
+    \pint\Socket\ChildSocket,
     \pint\Request,
     \pint\Response;
 
@@ -26,7 +27,7 @@ class Worker
     /**
      * Shared socket
      *
-     * @var \pint\Socket
+     * @var \pint\Socket\ChildSocket
      */
     protected $socket;
 

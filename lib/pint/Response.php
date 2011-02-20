@@ -3,6 +3,7 @@
 namespace pint;
 
 use \pint\Socket,
+    \pint\Socket\ChildSocket,
     \pint\Request,
     \pint\Exception,
     \pint\Mixin\ContainerAbstract;
@@ -135,7 +136,7 @@ class Response extends ContainerAbstract
      * @param \pint\Response|array $response
      * @return array
      */
-    public static function write(Socket $socket, $response)
+    public static function write(ChildSocket $socket, $response)
     {
         if ($socket->isClosed()) {
             // throw new Exception("Response::write() failed because its socket is already closed.");
@@ -169,7 +170,7 @@ class Response extends ContainerAbstract
         {
             $x = $socket->write($buffer, $bytes);
             if (!is_int($x)) {
-                echo "[{$this->pid()}] write error: {$socket->getLastErrorMessege()}\n";
+                echo "[{$this->pid()}] write error!\n";
                 break;
             } else {
                 $written += $x;
