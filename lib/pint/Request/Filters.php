@@ -91,17 +91,15 @@ class Filters
      */
     static function createServerEnv(\pint\Request $request, $input, array $config = array())
     {
-        $listen = \explode(':', $request['HTTP_HOST']); // replace with $config['listen']
-        $host   = \str_replace('http://', '', $listen[0]);
-        if(!isset($listen[1]) && !\is_numeric($listen[1])) {
-            $port = '-';
-        } else {
-            $port = $listen[1];
-        }
+        list($host, $port) = explode(':', $config['listen']);
+        
+        $hostname   = gethostname();
+        // list($addr) = gethostbynamel($hostname);
         
         $request->offsetSet('SERVER_SOFTWARE',  'pint/0.0.0');
         $request->offsetSet('SERVER_PROTOCOL',  'HTTP/1.1');
-        $request->offsetSet('SERVER_NAME',      'pint.io');
+        $request->offsetSet('SERVER_NAME',      $hostname);
+        $request->offsetSet('SERVER_ADDR',      $host);
         $request->offsetSet('SERVER_PORT',      $port);
     }
     
@@ -116,7 +114,9 @@ class Filters
     {
         $parts = \explode('?', $request['REQUEST_URI']);
         
-        $request['PATH_INFO'] = isset($parts[0]) ? $parts[0]    : $request['REQUEST_URI'];
-        $request['QUERY_STRING'] = isset($parts[1]) ? $parts[1] : '';
+        $request['PATH_INFO']    = isset($parts[0]) ? $parts[0]    : $request['REQUEST_URI'];
+        if(isset($parts[1])) {
+            $request['QUERY_STRING'] = $parts[1];
+        }
     }
 }
