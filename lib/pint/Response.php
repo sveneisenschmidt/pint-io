@@ -136,10 +136,10 @@ class Response extends ContainerAbstract
      * @param \pint\Response|array $response
      * @return void
      */
-    public static function write(ChildSocket $socket, $response)
+    public static function write(ChildSocket $socket, $response, $close = true)
     {
         if ($socket->isClosed()) {
-            // throw new Exception("Response::write() failed because its socket is already closed.");
+            print "Response::write() failed because its socket is already closed.";
             return;
         }
 
@@ -150,10 +150,10 @@ class Response extends ContainerAbstract
             $response[2] = (string)$response[2];
         }
         
-        $response[1] = array_merge($response[1], array(
-            'Content-Length' => \strlen($response[2]),
-            'Connection' => 'close' // keep-alive connections can be the knife in our back
-        ));
+        $response[1]['Content-Length'] = \strlen($response[2]);
+        if($close === true) {
+            $response[1]['Connection'] = 'close'; 
+        }
 
         // response line
         $buffer = \vsprintf("HTTP/1.1 %s %s\r\n", array($response[0], self::$status[$response[0]]));
@@ -177,6 +177,8 @@ class Response extends ContainerAbstract
             }
         }
 
-        $socket->close();
+        if($close === true) {
+            $socket->close();
+        }        
     } 
 }

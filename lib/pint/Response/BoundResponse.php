@@ -36,8 +36,8 @@ class BoundResponse extends Response
      * @param \pint\Response|array $response
      * @return void
      */
-    public function flush($response)
+    public function flush($response, $close = true)
     {
-        parent::write($this->socket, $response);
+        parent::write($this->socket, $response, $close);
     } 
 }

@@ -1,8 +1,4 @@
 <?php
 
 
-print 'Hello Lars & Sven, it is me, pint.io!';
-print '</hr>';
-
-
-die();
+header("HTTP/1.0 404 Not Found");

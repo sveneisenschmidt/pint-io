@@ -24,6 +24,22 @@ abstract class SapiAdapter extends AppAbstract
     
     /**
      *
+     * @var array
+     */
+    public $responseHeaders = array(
+        "Response Code"   => 200,
+        "Response Status" => 'OK',
+        "Content-Type"    => 'text/html' 
+    );
+    
+    /**
+     *
+     * @var array
+     */
+    public $overloads = array();
+    
+    /**
+     *
      * @return string
      */
     abstract public function getScriptPath();
@@ -48,9 +64,13 @@ abstract class SapiAdapter extends AppAbstract
         $buffer = $this->buffer($script);
         
         $this->cleanup();
+        
+        
+        list($code, $headers) = $this->finalResponseHeaders();
+        
         return array(
-            200,
-            array("Content-Type" => "text/html"),
+            $code,
+            $headers,
             $buffer
         );
     }
@@ -70,7 +90,7 @@ abstract class SapiAdapter extends AppAbstract
             
         $this->buffering = true;    
         ob_start();
-        require($script);
+        @include($script);
         $buffer = ob_get_contents();
         ob_end_clean();
         $this->buffering = false;    
@@ -86,6 +106,7 @@ abstract class SapiAdapter extends AppAbstract
     final public function process($env, \pint\Socket\ChildSocket $socket)
     {
         $this->setGlobals($env);
+        $this->overloadFunctions();
         $this->bindResponse($socket);
         $this->registerShutdown();
     }
@@ -106,7 +127,7 @@ abstract class SapiAdapter extends AppAbstract
      */
     final protected function setGlobals(Request $env)
     {
-        $GLOBALS = array(); // donno?!?!?!
+        $GLOBALS = array('PINT_SAPI' => $this); // donno?!?!?!
         
         $GLOBALS["_SERVER"]  = $env->server();
         $GLOBALS["_GET"]     = $env->paramsGet();
@@ -122,11 +143,50 @@ abstract class SapiAdapter extends AppAbstract
      */
     final protected function unsetGlobals()
     {
-        foreach (array("GET", "POST", "COOKIE", "FILES", "SERVER", "REQUEST") as $key) {
-            if (isset($GLOBALS["_$key"])) {
-                unset($GLOBALS["_$key"]);
+        foreach (array("_GET", "_POST", "_COOKIE", "_FILES", "_SERVER", "_REQUEST", 'PINT_SAPI') as $key) {
+            if (isset($GLOBALS["$key"])) {
+                unset($GLOBALS["$key"]);
             }
         }
+    }
+
+    /**
+     *
+     * @return void
+     */
+    final protected function overloadFunctions()
+    {
+        $sapi = $this;
+        $toOverload = @include(__DIR__ .'/SapiAdapter/SapiAdapterFunctions.php');
+        
+        foreach($toOverload as $new => $old) {
+            @\runkit_function_rename($old, 'php_' . $old);  
+            @\runkit_function_rename($new, $old);  
+        }
+        
+        $this->overloads = $toOverload;
+    }
+
+    /**
+     *
+     * @return void
+     */
+    final public function pushResponseHeader($headerString)
+    {
+        $headers = @\http_parse_headers($headerString) ?: array();
+        
+        $this->responseHeaders = array_merge(
+            $this->responseHeaders, $headers    
+        );
+    }
+
+    /**
+     *
+     * @return void
+     */
+    final public function responseHeaders()
+    {
+        return $this->responseHeaders;
     }
 
     /**
@@ -145,7 +205,8 @@ abstract class SapiAdapter extends AppAbstract
      */
     final protected function registerShutdown()
     {
-        $sapi = $this;
+        $sapi      = $this;
+        
         \register_shutdown_function(function() use($sapi) {
             if($sapi->buffering === true) {
                 $buffer = ob_get_contents();
@@ -162,5 +223,18 @@ abstract class SapiAdapter extends AppAbstract
                 $sapi->cleanup();
             }   
         });
+    }
+
+    /**
+     *
+     * @return array
+     */
+    final protected function finalResponseHeaders()
+    {
+        $headers = $this->responseHeaders();        
+        $code = $headers['Response Code'];
+        unset($headers['Response Code'], $headers['Response Status']);
+        
+        return array($code, $headers);
     }
 }
