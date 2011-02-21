@@ -29,7 +29,7 @@ class Stack
         }
     }
 
-    function build($env)
+    function build($env, $socket)
     {
         if (!$this->app()) {
             throw new Exception('No app specified!');
@@ -37,7 +37,7 @@ class Stack
         
         $stack = $this->buildCallable($this->app());
         if(method_exists($stack, 'process')) {
-            call_user_func(array($stack, 'process'), $env);
+            call_user_func(array($stack, 'process'), $env, $socket);
         }
         
         foreach ($this->middleware() as $mw)
@@ -65,8 +65,8 @@ class Stack
         return $obj;
     }
 
-    function call($env)
+    function call($env, $socket)
     {
-        return $this->build($env)->call($env);
+        return $this->build($env, $socket)->call($env);
     }
 }

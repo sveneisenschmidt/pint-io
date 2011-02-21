@@ -2,3 +2,6 @@ PHP Extensions via PECL
 =======================
 
 * pecl_http
+* runkit
+    - only working version comes from github, download the tgz file
+      andinstall it via (sudo) pecl install /path/to/runkit_package.tgz 

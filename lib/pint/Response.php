@@ -134,7 +134,7 @@ class Response extends ContainerAbstract
     /**
      * @param \pint\Socket $socket
      * @param \pint\Response|array $response
-     * @return array
+     * @return void
      */
     public static function write(ChildSocket $socket, $response)
     {

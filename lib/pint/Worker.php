@@ -202,7 +202,7 @@ class Worker
         $config = $this->server->config();
         
         clearstatcache();
-        $mtime = filemtime($this->pingFile());
+        $mtime = @filemtime($this->pingFile());
         return $mtime > (time() - $config["timeout"]);
     }
 
@@ -244,7 +244,7 @@ class Worker
             $response = Response::badRequest();
         } else {
             try {
-                $response = $this->server()->stack()->call($request);
+                $response = $this->server()->stack()->call($request, $socket);
             } catch (\Exception $e) {
                 $response = Response::internalServerError();
             }

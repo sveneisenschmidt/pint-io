@@ -4,10 +4,23 @@ namespace pint\Adapters;
 
 use \pint\App\AppAbstract,
     \pint\Request,
-    \pint\Response;
+    \pint\Response,
+    \pint\Response\BoundResponse;
 
 abstract class SapiAdapter extends AppAbstract
 {
+    
+    /**
+     *
+     * @var boolean
+     */
+    public $buffering = false;
+    
+    /**
+     *
+     * @var \pint\Response\BoundResponse
+     */
+    public $boundResponse = null;
     
     /**
      *
@@ -55,21 +68,26 @@ abstract class SapiAdapter extends AppAbstract
             $GLOBALS['_FILES'] , $GLOBALS['_REQUEST'] 
         );
             
+        $this->buffering = true;    
         ob_start();
         require($script);
         $buffer = ob_get_contents();
         ob_end_clean();
+        $this->buffering = false;    
         return $buffer;
     }
     
     /**
      *
      * @param array $env
+     * @param \pint\Socket\ChildSocket $socket
      * @return void
      */
-    final public function process($env)
+    final public function process($env, \pint\Socket\ChildSocket $socket)
     {
         $this->setGlobals($env);
+        $this->bindResponse($socket);
+        $this->registerShutdown();
     }
     
     /**
@@ -86,7 +104,7 @@ abstract class SapiAdapter extends AppAbstract
      * @param \pint\Request $env
      * @return void
      */
-    function setGlobals(Request $env)
+    final protected function setGlobals(Request $env)
     {
         $GLOBALS = array(); // donno?!?!?!
         
@@ -102,12 +120,47 @@ abstract class SapiAdapter extends AppAbstract
      *
      * @return void
      */
-    function unsetGlobals()
+    final protected function unsetGlobals()
     {
         foreach (array("GET", "POST", "COOKIE", "FILES", "SERVER", "REQUEST") as $key) {
             if (isset($GLOBALS["_$key"])) {
                 unset($GLOBALS["_$key"]);
             }
         }
+    }
+
+    /**
+     *
+     * @param \pint\Socket\ChildSocket $socket
+     * @return void
+     */
+    final protected function bindResponse(\pint\Socket\ChildSocket $socket) 
+    {
+        $this->boundResponse = BoundResponse::bind($socket);         
+    }
+
+    /**
+     *
+     * @return void
+     */
+    final protected function registerShutdown()
+    {
+        $sapi = $this;
+        \register_shutdown_function(function() use($sapi) {
+            if($sapi->buffering === true) {
+                $buffer = ob_get_contents();
+                ob_end_clean();
+                
+                if(!is_null($sapi->boundResponse)) {
+                    $sapi->boundResponse->flush(array(
+                        200,
+                        array("Content-Type" => "text/html"),
+                        $buffer
+                    ));
+                    unset($buffer);
+                }
+                $sapi->cleanup();
+            }   
+        });
     }
 }

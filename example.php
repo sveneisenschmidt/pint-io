@@ -4,7 +4,7 @@ return array(
     "listen" => "127.0.0.1:3000",
     "socket_file" => "tmp/pint.sock",
     "pid_file" => "tmp/pint.pid",
-    "fork" => false,
+    "fork" => true,
 //    "fork" => function($server) {
 //        echo "Shall I fork?\n";
 //        return $server->env() != "development";

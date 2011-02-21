@@ -8,6 +8,6 @@ abstract class AppAbstract implements AppInterface {
     
     final function __construct() {}
     
-    function process($env) {}
+    function process($env, \pint\Socket\ChildSocket $socket) {}
     
 }

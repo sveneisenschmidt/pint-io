@@ -8,5 +8,5 @@ interface AppInterface {
     
     public function call($env);
     
-    public function process($env);
+    public function process($env, \pint\Socket\ChildSocket $socket);
 }
