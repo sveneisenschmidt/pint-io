@@ -38,6 +38,16 @@ switch($path) {
         print '</pre>';
     break;
 
+    case 'output-json':
+        header('Content-Type: application/json');
+        print json_encode(array(
+            "ResultSet" => array(
+                "Message" => "You requested some JSON? pint.IO is serving you soem JSON :)"
+            )
+        ));
+        exit();
+    break;
+
     case '':
         print 'Welcome!';
     break;
@@ -56,5 +66,6 @@ $host = 'http://' . $_SERVER['HTTP_HOST'] . '/';
 <a href="<?php print $host; ?>server">Server Env</a> |
 <a href="<?php print $host; ?>query-string?hello=my friend">Query String</a> |
 <a href="<?php print $host; ?>request">Complete Request</a> |
+<a href="<?php print $host; ?>output-json">Some JSON?</a> |
 <a href="<?php print $host . time() ; ?>">404</a>
 

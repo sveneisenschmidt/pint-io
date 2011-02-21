@@ -228,12 +228,13 @@ abstract class SapiAdapter extends AppAbstract
                 ob_end_clean();
                 
                 if(!is_null($sapi->boundResponse)) {
+                    list($code, $headers) = $sapi->finalResponseHeaders();
                     $sapi->boundResponse->flush(array(
-                        200,
-                        array("Content-Type" => "text/html"),
+                        $code,
+                        $headers,
                         $buffer
                     ));
-                    unset($buffer);
+                    unset($buffer, $code, $headers);
                 }
                 $sapi->cleanup();
             } 
@@ -244,7 +245,7 @@ abstract class SapiAdapter extends AppAbstract
      *
      * @return array
      */
-    final protected function finalResponseHeaders()
+    final public function finalResponseHeaders()
     {
         $headers = $this->responseHeaders();        
         $code = $headers['Response Code'];
