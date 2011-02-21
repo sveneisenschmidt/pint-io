@@ -27,7 +27,7 @@ class BoundResponse extends Response
      * @param \pint\Socket\ChildSocket $socket
      * @return \pint\Response\BoundResponse
      */
-    public function bind(ChildSocket $socket)
+    public static function bind(ChildSocket $socket)
     {
         return new self($socket);        
     }

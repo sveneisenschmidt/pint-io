@@ -1,5 +1,4 @@
 <?php
-
 $path = trim($_SERVER['PATH_INFO'], '/');
 
 switch($path) {
@@ -48,6 +47,10 @@ switch($path) {
         exit();
     break;
 
+    case 'exception':
+        throw new Exception('Some Exception!');
+    break;
+
     case '':
         print 'Welcome!';
     break;
@@ -66,6 +69,7 @@ $host = 'http://' . $_SERVER['HTTP_HOST'] . '/';
 <a href="<?php print $host; ?>server">Server Env</a> |
 <a href="<?php print $host; ?>query-string?hello=my friend">Query String</a> |
 <a href="<?php print $host; ?>request">Complete Request</a> |
+<a href="<?php print $host; ?>exception">Exception</a> |
 <a href="<?php print $host; ?>output-json">Some JSON?</a> |
 <a href="<?php print $host . time() ; ?>">404</a>
 

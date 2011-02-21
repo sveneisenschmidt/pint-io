@@ -76,7 +76,10 @@ class Socket
      */
     public function available()
     {
-        return @\stream_select($r = array($this->resource), $w = null, $x = null, 1);
+        $r = array($this->resource);
+        $w = $x = null;
+        
+        return @\stream_select($r, $w, $x, 1);
     }
     
     /**

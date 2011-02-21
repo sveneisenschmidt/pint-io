@@ -62,17 +62,11 @@ abstract class SapiAdapter extends AppAbstract
         
         // Missing, error handling, cookies, session, etc
         $buffer = $this->buffer($script);
-        
+
+        list($code, $headers) = $this->finalResponseHeaders();
         $this->cleanup();
         
-        
-        list($code, $headers) = $this->finalResponseHeaders();
-        
-        return array(
-            $code,
-            $headers,
-            $buffer
-        );
+        return array( $code, $headers, $buffer);
     }
     
     /**
@@ -87,13 +81,18 @@ abstract class SapiAdapter extends AppAbstract
             $GLOBALS['_POST']  , $GLOBALS['_COOKIE'], 
             $GLOBALS['_FILES'] , $GLOBALS['_REQUEST'] 
         );
-            
+
         $this->buffering = true;    
+        $buffer = "";
         ob_start();
-        @include($script);
+        try {
+            @require($script); 
+        } catch (\Exception $exception) {
+            print \pint\Adapters\SapiAdapter::formatException($exception);
+        }
         $buffer = ob_get_contents();
         ob_end_clean();
-        $this->buffering = false;    
+        $this->buffering = false;  
         return $buffer;
     }
     
@@ -118,7 +117,7 @@ abstract class SapiAdapter extends AppAbstract
     final public function cleanup()
     {
         $this->unsetGlobals();
-        $this->unsetOverloads();
+        // $this->unsetOverloads();
     }
     
     /**
@@ -142,16 +141,14 @@ abstract class SapiAdapter extends AppAbstract
      *
      * @return void
      */
-    final protected function unsetOverloads()
+    final protected function unsetGlobals()
     {
         foreach (array("_GET", "_POST", "_COOKIE", "_FILES", "_SERVER", "_REQUEST", 'PINT_SAPI') as $key) {
             if (isset($GLOBALS["$key"])) {
                 unset($GLOBALS["$key"]);
             }
         }
-    }
-  
-            
+    }   
     
     /**
      *
@@ -168,18 +165,6 @@ abstract class SapiAdapter extends AppAbstract
         }
         
         $this->overloads = $toOverload;
-    }
-
-    /**
-     *
-     * @return void
-     */
-    final protected function unsetGlobals()
-    {
-        foreach($this->overloads as $new => $old) {
-            @\runkit_function_remove($new);
-            @\runkit_function_rename('php_' . $old, $old);
-        }
     }
 
     /**
@@ -223,21 +208,27 @@ abstract class SapiAdapter extends AppAbstract
         $sapi = $this;
         
         \register_shutdown_function(function() use($sapi) {
+            
             if($sapi->buffering === true) {
-                $buffer = ob_get_contents();
+                if(is_array($error = error_get_last())) {
+                    print \pint\Adapters\SapiAdapter::formatError($error);
+                }
+                
+                $buffer = ob_get_contents();  
                 ob_end_clean();
                 
-                if(!is_null($sapi->boundResponse)) {
-                    list($code, $headers) = $sapi->finalResponseHeaders();
-                    $sapi->boundResponse->flush(array(
-                        $code,
-                        $headers,
-                        $buffer
-                    ));
-                    unset($buffer, $code, $headers);
+                if(is_null($sapi->boundResponse)) {
+                    $msg = 'Missing bound Response!';
+                    print 'Error: ' . $msg;
+                    throw new Exception($msg);    
                 }
+                
+                list($code, $headers) = $sapi->finalResponseHeaders();
+                $sapi->boundResponse->flush(array($code,$headers,$buffer));
+                unset($buffer, $code, $headers);
+                
                 $sapi->cleanup();
-            } 
+            }
         });
     }
 
@@ -253,4 +244,31 @@ abstract class SapiAdapter extends AppAbstract
         
         return array($code, $headers);
     }
+    
+    /**
+     * @param array $error
+     * @return string
+     */
+    public static function formatError(array $error)
+    {
+        switch((int) $error['type']) {
+            case 4:
+                return "Parse error: {$error['message']} in file {$error['file']} on line {$error['line']}";
+            break;
+                        
+            default:
+                return 'pint.IO could not detect error type';
+        } 
+    }
+    
+    /**
+     * @param Exception $exception
+     * @return string
+     */
+    public static function formatException(\Exception $exception)
+    {
+        // lars could append here his nifty exception formatter
+        return '<pre>' . $exception->__toString() . '</pre>';   
+    }
+    
 }

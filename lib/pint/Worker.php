@@ -290,7 +290,7 @@ class Worker
      */
     function kill()
     {
-        unlink($this->pingFile());
+        @unlink($this->pingFile());
         posix_kill($this->pid(), SIGKILL);
     }
 }
