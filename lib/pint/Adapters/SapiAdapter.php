@@ -118,6 +118,7 @@ abstract class SapiAdapter extends AppAbstract
     final public function cleanup()
     {
         $this->unsetGlobals();
+        $this->unsetOverloads();
     }
     
     /**
@@ -141,7 +142,7 @@ abstract class SapiAdapter extends AppAbstract
      *
      * @return void
      */
-    final protected function unsetGlobals()
+    final protected function unsetOverloads()
     {
         foreach (array("_GET", "_POST", "_COOKIE", "_FILES", "_SERVER", "_REQUEST", 'PINT_SAPI') as $key) {
             if (isset($GLOBALS["$key"])) {
@@ -149,7 +150,9 @@ abstract class SapiAdapter extends AppAbstract
             }
         }
     }
-
+  
+            
+    
     /**
      *
      * @return void
@@ -165,6 +168,18 @@ abstract class SapiAdapter extends AppAbstract
         }
         
         $this->overloads = $toOverload;
+    }
+
+    /**
+     *
+     * @return void
+     */
+    final protected function unsetGlobals()
+    {
+        foreach($this->overloads as $new => $old) {
+            @\runkit_function_remove($new);
+            @\runkit_function_rename('php_' . $old, $old);
+        }
     }
 
     /**
@@ -205,7 +220,7 @@ abstract class SapiAdapter extends AppAbstract
      */
     final protected function registerShutdown()
     {
-        $sapi      = $this;
+        $sapi = $this;
         
         \register_shutdown_function(function() use($sapi) {
             if($sapi->buffering === true) {
@@ -221,7 +236,7 @@ abstract class SapiAdapter extends AppAbstract
                     unset($buffer);
                 }
                 $sapi->cleanup();
-            }   
+            } 
         });
     }
 
