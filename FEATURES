@@ -1,0 +1,9 @@
+pint.IO Features
+================
+
+* Forkable Server into Workers
+* Loading all your Classes on boot and than just fork from them 
+* SapiAdapter for native PHP scripts and applications
+  * Use die & exit like you ar ein a normal apache or nginx, pint.IO server will not stop
+    execution when you are working with workers
+  * $_FILES, $_GET, $_POST, $_REQUEST, $_SERVER, ($_COOKIES - not yet implemented) is there like you would expect
