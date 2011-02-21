@@ -6,6 +6,6 @@ class ScriptApp extends \pint\Adapters\SapiAdapter
 {
     function getScriptPath()
     {
-        return __DIR__ . '/script.php';
+        return __DIR__ . '/ScriptApp/script.php';
     }
 }
