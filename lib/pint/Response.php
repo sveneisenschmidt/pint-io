@@ -122,12 +122,14 @@ class Response extends ContainerAbstract
      *
      * @return array
      */
-    public static function internalServerError()
+    public static function internalServerError($message = null)
     {
         return self::fromArray(array(
             500,
             array("Content-Type" => "text/html"),
-            array("500 " . self::$status[500]),
+            array(
+                !is_null($message) ? $message : "500 " . self::$status[500]
+            ),
         ));
     }      
     

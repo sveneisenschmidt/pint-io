@@ -49,8 +49,20 @@ abstract class SapiAdapter extends AppAbstract
      */
     final public function call($env)
     {
-        print_r(error_get_last());
-        return array(200, array(), 'OK');        
+        $script = $this->getScriptPath();
+        if(!file_exists($script)) {
+            return Response::internalServerError("File: {$script} does not exist!");
+        }
+        
+        $sandbox = new Sandbox($this->globals);
+        $sandbox->bind($this, 'output');
+        $buffer = $sandbox->run($script); 
+        
+        return array(
+            200,
+            array(),
+            $buffer
+        );
     }
     
     /**

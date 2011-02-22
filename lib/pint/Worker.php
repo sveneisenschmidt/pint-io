@@ -277,6 +277,7 @@ class Worker
      */
     function shutdown()
     {
+
         $this->shuttingDown = true;
         if (!$this->forked)
         {

@@ -8,7 +8,7 @@
 * Have a look at Server->maintainWorkers
 * Cookie Handling in pint\Adapters\SapiAdapter
 * Transform array strcuture with nested names in \pint\request::(postParams|files)
-* Error handling in SapiAdapter
+* add formatter closure via static method to SapiAdapter
 
 
 Done:
@@ -16,3 +16,4 @@ Done:
 * SERVER_NAME from gethostname(), SERVER_PORT from config
 * Request env should also contain SERVER_ADDR, REMOTE_ADDR and REMOTE_PORT
 * Connection->write should set the Content-Length header (already implemented)
+* Error handling in SapiAdapter

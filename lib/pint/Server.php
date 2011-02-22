@@ -213,8 +213,6 @@ class Server
         }
 
         // main loop finished, start shutting down
-
-
         if ($this->config["fork"])
         {
             echo "Shutting down workers\n";
@@ -289,7 +287,7 @@ class Server
         }
 
         // reindex workers
-        $this->workers = array_values($this->workers);
+        $this->workers = \array_values($this->workers);
 
         if ($forkNew) {
             // fork new workers

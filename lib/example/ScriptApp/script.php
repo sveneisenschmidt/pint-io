@@ -1,7 +1,8 @@
 <?php
+
 $path = trim($_SERVER['PATH_INFO'], '/');
 
-switch($path) {
+switch($path) { 
 
     case 'server':
         print 'Hey, there is your Server env!';
