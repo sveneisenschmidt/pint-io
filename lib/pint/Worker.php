@@ -170,7 +170,7 @@ class Worker
      */
     function ping()
     {
-        touch($this->pingFile());
+        @\touch($this->pingFile());
     }
 
     /**
@@ -180,7 +180,8 @@ class Worker
      */
     function alive()
     {
-        return @pcntl_getpriority($this->pid()) !== false;
+        return $this->responsive();
+        //return pcntl_getpriority($this->pid()) !== false;
     }
 
     /**
@@ -202,7 +203,7 @@ class Worker
         $config = $this->server->config();
         
         clearstatcache();
-        $mtime = @filemtime($this->pingFile());
+        $mtime = filemtime($this->pingFile());
         return $mtime > (time() - $config["timeout"]);
     }
 
@@ -245,7 +246,7 @@ class Worker
         } else {
             try {
                 $response = $this->server()->stack()->call($request, $socket);
-            } catch (\Exception $e) {
+            } catch (\pint\Exception $e) {
                 $response = Response::internalServerError();
             }
         }
@@ -290,7 +291,10 @@ class Worker
      */
     function kill()
     {
-        @unlink($this->pingFile());
+        clearstatcache();
+        if(file_exists($this->pingFile())) {
+            unlink($this->pingFile());
+        }
         posix_kill($this->pid(), SIGKILL);
     }
 }

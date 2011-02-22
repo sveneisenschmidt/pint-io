@@ -166,7 +166,7 @@ class Server
 
         
         $this->socket = Socket::create($this->config["listen"]);
-        $this->socket->nonblock();
+        $this->socket->nonblock(1);
         
         echo "Listening on http://" . $this->config["listen"] . "\n";
 
@@ -282,8 +282,8 @@ class Server
         pcntl_wait($status, WNOHANG);
         foreach ($this->workers as $i => $worker)
         {
-            if (!$worker->alive())
-            {
+            usleep(100);
+            if (!$worker->alive()) {
                 unset($this->workers[$i]);
             }
         }
@@ -353,10 +353,13 @@ class Server
      */
     public static function cleanup(\pint\Server $server, array $dirs = array())
     {
+        clearstatcache();
         foreach($dirs as $path) {
             $pattern = $path . \DIRECTORY_SEPARATOR .'*';
             foreach(\glob($pattern) as $file) {
-                @unlink($file);
+                if(file_exists($file)) {
+                    @unlink($file);    
+                }
             }
         }
     }

@@ -22,7 +22,7 @@ class Socket
      */
     public static function create($listen)
     {
-        $resource = \stream_socket_server($listen, $a, $b);
+        $resource = @\stream_socket_server($listen, $a, $b);
         return new static($resource);
     }
     
@@ -62,9 +62,7 @@ class Socket
         $child = @\stream_socket_accept($this->resource, -1);
         
         if(is_resource($child)) {
-            $child = ChildSocket::fromResource($child);
-            
-            return $child;
+            return ChildSocket::fromResource($child);
         }
         
         return false;

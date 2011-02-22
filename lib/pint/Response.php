@@ -127,7 +127,7 @@ class Response extends ContainerAbstract
         return self::fromArray(array(
             500,
             array("Content-Type" => "text/html"),
-            array("500 " . self::$status[400]),
+            array("500 " . self::$status[500]),
         ));
     }      
     
