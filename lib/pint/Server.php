@@ -29,7 +29,8 @@ class Server
         "timeout" => 30,
         "boot" => null,
         "before_fork" => null,
-        "after_fork" => null
+        "after_fork" => null,
+        "startup_tries" => 5
     );
 
     /**
@@ -116,6 +117,20 @@ class Server
         }
 
         return $this->config;
+    }
+
+    /**
+     * getter for runtime configuration
+     *
+     * @param string $key
+     * @return mixed
+     */
+    function configVar($key)
+    {
+        if(!\array_key_exists($key, $this->config)) {
+            return null;
+        }
+        return $this->config[$key];
     }
 
     /**

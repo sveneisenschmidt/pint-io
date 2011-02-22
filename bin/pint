@@ -20,7 +20,7 @@ if (!isset($_ENV["PINT_ENV"]) || empty($_ENV["PINT_ENV"]))
     $_ENV["PINT_ENV"] = "development";
 }
 
-$tries = 5;
+$maxtries = $tries = $server->configVar('startup_tries');
 start:
 
 try {
@@ -30,7 +30,7 @@ try {
     if($exception instanceof \pint\Socket\InvalidResourceException ||
        $exception instanceof \pint\Server\StillRunningException    
     ) {
-        if($tries <= 0) {
+        if($tries  <= 0) {
             print "Shutting down. pint.IO could not start. ({$tries} tries left) \r\n";
             die();
     
@@ -39,7 +39,7 @@ try {
             print "Socket is unavailable or bound to something other. \r\n" . 
                 "Trying it again in 1s. ({$tries} tries left). \r\n\r\n";
             
-            if($tries > 3) {
+            if($tries > $maxtries -1) {
                 print "- Please check if pint.IO is already running and bound to a port. \r\n" .
                       "- This could also happen when another pint.IO server is still shutting down. \r\n\r\n";
             } else {

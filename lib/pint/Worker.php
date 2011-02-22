@@ -203,7 +203,9 @@ class Worker
         $config = $this->server->config();
         
         clearstatcache();
-        $mtime = filemtime($this->pingFile());
+        if(!$mtime = @filemtime($this->pingFile())) {
+            return null;
+        }
         return $mtime > (time() - $config["timeout"]);
     }
 

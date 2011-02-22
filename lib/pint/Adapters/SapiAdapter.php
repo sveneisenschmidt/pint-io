@@ -57,7 +57,7 @@ abstract class SapiAdapter extends AppAbstract
         return array(
             200,
             array('Content-Type' => 'text/html'),
-            $buffer
+            $content
         );
     }
     
