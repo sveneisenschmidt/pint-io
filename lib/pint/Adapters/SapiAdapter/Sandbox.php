@@ -2,6 +2,8 @@
 
 namespace pint\Adapters\SapiAdapter;
 
+use \pint\Exception;
+
 class Sandbox
 {
     /**
@@ -14,6 +16,16 @@ class Sandbox
         '_FILES' => array(),    
         '_SERVER' => array(),    
         '_COOKIE' => array(),    
+    );
+    
+    /**
+     *
+     * @var array
+     */
+    public $responseHeaders = array(
+        "Response Code"   => 200,
+        "Response Status" => 'OK',
+        "Content-Type"    => 'text/html' 
     );
         
     /**
@@ -58,11 +70,13 @@ class Sandbox
      */
     public function run($script)
     { 
-        if(is_array($this->bind) || function_exist($this->bind)) {
-            \register_shutdown_function(array($this, 'handleOutput'));
-            \set_error_handler(array($this, 'handleError')); 
-            \set_exception_handler(array($this, 'handleError')); 
-        }  
+        if(!is_array($this->bind)) {
+            throw new Exception('Missing required bind!');  
+        } 
+        
+        \register_shutdown_function(array($this, 'handleOutput'));
+        \set_error_handler(array($this, 'handleError')); 
+        \set_exception_handler(array($this, 'handleError')); 
         
         $GLOBALS["_SERVER"]  = $this->globals['_SERVER'];
         $GLOBALS["_GET"]     = $this->globals['_GET'];
@@ -79,10 +93,12 @@ class Sandbox
         
         ob_start();
         @require($script); 
-        $buffer .= ob_get_contents();
+        $buffer = ob_get_contents();
         for($c = ob_get_level(); $c > 0; $c--) {
             ob_end_clean();
         }   
+        
+        ;
         
         return $this->buffer = $buffer;
     }
@@ -96,8 +112,9 @@ class Sandbox
         if($this->error === false) {
             for($c = ob_get_level(); $c > 0; $c--) {
                 ob_end_clean();
-            }   
-            \call_user_func($this->bind, $this->buffer);
+            }  
+            
+            \call_user_func_array($this->bind, array( array(), $buffer));
         }        
     }
         
@@ -125,7 +142,7 @@ class Sandbox
             $buffer = '<pre>' . $error->__toString() . '</pre>';
         }
         
-        \call_user_func($this->bind, $buffer);
+        \call_user_func_array($this->bind, array( array(), $buffer));
     }
         
     /**
@@ -137,5 +154,40 @@ class Sandbox
     public function bind($class, $method)
     { 
         $this->bind = array($class, $method);
+    }
+
+    /**
+     *
+     * @return array
+     */
+    public function finalResponseHeaders()
+    {
+        $headers = $this->responseHeaders();        
+        $code = $headers['Response Code'];
+        unset($headers['Response Code'], $headers['Response Status']);
+        
+        return array($code, $headers);
+    }
+
+    /**
+     *
+     * @return void
+     */
+    final public function pushResponseHeader($headerString)
+    {
+        $headers = @\http_parse_headers($headerString) ?: array();
+        
+        $this->responseHeaders = array_merge(
+            $this->responseHeaders, $headers    
+        );
+    }
+
+    /**
+     *
+     * @return void
+     */
+    final public function responseHeaders()
+    {
+        return $this->responseHeaders;
     }
 }

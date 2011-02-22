@@ -128,7 +128,9 @@ class Response extends ContainerAbstract
             500,
             array("Content-Type" => "text/html"),
             array(
-                !is_null($message) ? $message : "500 " . self::$status[500]
+                !is_null($message) ? 
+                    "500 " . self::$status[500] . ": " . $message : 
+                        "500 " . self::$status[500]
             ),
         ));
     }      

@@ -3,7 +3,8 @@
 namespace pint;
 
 use \pint\Exception,
-    \pint\Socket\ChildSocket;
+    \pint\Socket\ChildSocket,
+    \pint\Socket\InvalidResourceException;
 
 class Socket
 {
@@ -47,7 +48,7 @@ class Socket
     public function __construct($resource)
     {
         if(!\is_resource($resource)) {
-            throw new Exception('$resource is no valid socket!');
+            throw new InvalidResourceException('$resource is no valid socket!');
         }
         
         $this->resource = $resource;        

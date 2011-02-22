@@ -1,6 +1,5 @@
 #!/usr/bin/env php
 <?php
-
 namespace pint;
 
 $path = dirname(dirname(__FILE__));
@@ -20,4 +19,38 @@ if (!isset($_ENV["PINT_ENV"]) || empty($_ENV["PINT_ENV"]))
 {
     $_ENV["PINT_ENV"] = "development";
 }
-$server->start($_ENV["PINT_ENV"]);
+
+$tries = 5;
+start:
+
+try {
+    $server->start($_ENV["PINT_ENV"]);
+} catch(\Exception $exception) {
+    
+    if($exception instanceof \pint\Socket\InvalidResourceException ||
+       $exception instanceof \pint\Server\StillRunningException    
+    ) {
+        if($tries <= 0) {
+            print "Shutting down. pint.IO could not start. ({$tries} tries left) \r\n";
+            die();
+    
+        } else { 
+            $tries--;
+            print "Socket is unavailable or bound to something other. \r\n" . 
+                "Trying it again in 1s. ({$tries} tries left). \r\n\r\n";
+            
+            if($tries > 3) {
+                print "- Please check if pint.IO is already running and bound to a port. \r\n" .
+                      "- This could also happen when another pint.IO server is still shutting down. \r\n\r\n";
+            } else {
+                print "-- \r\n\r\n";
+            }
+            
+            sleep(1);
+            goto start; 
+        }  
+    }
+    
+    throw $exception;
+}
+

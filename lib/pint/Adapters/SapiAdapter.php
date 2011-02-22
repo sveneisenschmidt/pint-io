@@ -25,16 +25,6 @@ abstract class SapiAdapter extends AppAbstract
      * @var \pint\Response\BoundResponse
      */
     public $boundResponse = null;
-    
-    /**
-     *
-     * @var array
-     */
-    public $responseHeaders = array(
-        "Response Code"   => 200,
-        "Response Status" => 'OK',
-        "Content-Type"    => 'text/html' 
-    );
         
     /**
      *
@@ -56,7 +46,13 @@ abstract class SapiAdapter extends AppAbstract
         
         $sandbox = new Sandbox($this->globals);
         $sandbox->bind($this, 'output');
-        $buffer = $sandbox->run($script); 
+        
+        $content = $sandbox->run($script); 
+        list($code, $headers) = $sandbox->finalResponseHeaders();
+        
+        print_r($code);
+        print_r($headers);
+        
         
         return array(
             200,
@@ -82,7 +78,7 @@ abstract class SapiAdapter extends AppAbstract
      *
      * @return void
      */
-    final public function output($string) 
+    final public function output($headers, $string) 
     {
         $this->boundResponse->flush(array(
             200,

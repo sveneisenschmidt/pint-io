@@ -247,7 +247,7 @@ class Worker
             try {
                 $response = $this->server()->stack()->call($request, $socket);
             } catch (\pint\Exception $e) {
-                $response = Response::internalServerError();
+                $response = Response::internalServerError($e->getMessage());
             }
         }
          

@@ -4,7 +4,8 @@ namespace pint;
 
 use \pint\Socket,
     \pint\Stack,
-    \pint\Worker;
+    \pint\Worker,
+    \pint\Server\StillRunningException;
 
 /**
  * Central Server Manager (Master)
@@ -153,7 +154,7 @@ class Server
 
         // write PID file
         if (\file_exists($this->config["pid_file"])) {
-            throw new Exception($this->config["pid_file"] . " already exists.");
+            throw new StillRunningException($this->config["pid_file"] . " already exists.");
         }
         \file_put_contents($this->config["pid_file"], $this->pid());
         
