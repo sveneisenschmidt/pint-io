@@ -50,15 +50,7 @@ abstract class SapiAdapter extends AppAbstract
         $content = $sandbox->run($script); 
         list($code, $headers) = $sandbox->finalResponseHeaders();
         
-        print_r($code);
-        print_r($headers);
-        
-        
-        return array(
-            200,
-            array('Content-Type' => 'text/html'),
-            $content
-        );
+        return array($code, $headers, $content);
     }
     
     /**
@@ -78,11 +70,12 @@ abstract class SapiAdapter extends AppAbstract
      *
      * @return void
      */
-    final public function output($headers, $string) 
+    final public function output($combinedHeaders, $string) 
     {
+        list($code, $headers) = $combinedHeaders;
         $this->boundResponse->flush(array(
-            200,
-            array('Content-Type' => 'text/html'),
+            $code,
+            $headers,
             $string
         ));
     }

@@ -2,7 +2,8 @@
 
 namespace pint\Adapters\SapiAdapter;
 
-use \pint\Exception;
+use \pint\Exception,
+    \pint\Adapters\SapiAdapter\Functions\AlreadyExistsException;
 
 class Sandbox
 {
@@ -48,9 +49,9 @@ class Sandbox
         
     /**
      *
-     * @var string
+     * @var array
      */
-    protected $output = "";
+    protected $functions = array();
         
     /**
      *
@@ -74,6 +75,7 @@ class Sandbox
             throw new Exception('Missing required bind!');  
         } 
         
+        $this->registerSapiFunctions();
         \register_shutdown_function(array($this, 'handleOutput'));
         \set_error_handler(array($this, 'handleError')); 
         \set_exception_handler(array($this, 'handleError')); 
@@ -84,11 +86,12 @@ class Sandbox
         $GLOBALS["_COOKIE"]  = array();
         $GLOBALS["_FILES"]   = $this->globals['_FILES'];
         $GLOBALS["_REQUEST"] = \array_merge($GLOBALS["_GET"], $GLOBALS["_POST"]) ;
+        $GLOBALS['_SANDBOX'] = $this;
         
         list($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES, $_REQUEST) = array(
             $GLOBALS['_SERVER'], $GLOBALS['_GET'], 
             $GLOBALS['_POST']  , $GLOBALS['_COOKIE'], 
-            $GLOBALS['_FILES'] , $GLOBALS['_REQUEST'] 
+            $GLOBALS['_FILES'] , $GLOBALS['_REQUEST']
         );
         
         ob_start();
@@ -97,8 +100,6 @@ class Sandbox
         for($c = ob_get_level(); $c > 0; $c--) {
             ob_end_clean();
         }   
-        
-        ;
         
         return $this->buffer = $buffer;
     }
@@ -109,13 +110,13 @@ class Sandbox
      */
     public function handleOutput()
     { 
-        if($this->error === false) {
-            for($c = ob_get_level(); $c > 0; $c--) {
-                ob_end_clean();
-            }  
+        $buffer = ob_get_contents();
+        for($c = ob_get_level(); $c > 0; $c--) {
+            ob_end_clean();
+        }  
             
-            \call_user_func_array($this->bind, array( array(), $buffer));
-        }        
+        \call_user_func_array($this->bind, array($this->finalResponseHeaders(), $buffer));
+        $this->cleanup();
     }
         
     /**
@@ -140,9 +141,12 @@ class Sandbox
         } else
         if(is_object($error)) {
             $buffer = '<pre>' . $error->__toString() . '</pre>';
+        } else {
+            $buffer = 'unkown error';
         }
         
-        \call_user_func_array($this->bind, array( array(), $buffer));
+        \call_user_func_array($this->bind, array(array(), $buffer));
+        $this->cleanup();
     }
         
     /**
@@ -175,7 +179,10 @@ class Sandbox
      */
     final public function pushResponseHeader($headerString)
     {
-        $headers = @\http_parse_headers($headerString) ?: array();
+        $headers = @\http_parse_headers($headerString);
+        if($headers === false || is_null($headers)) {
+            $headers = array();
+        }
         
         $this->responseHeaders = array_merge(
             $this->responseHeaders, $headers    
@@ -190,4 +197,60 @@ class Sandbox
     {
         return $this->responseHeaders;
     }
+
+    /**
+     *
+     * @return void
+     */
+    final public function cleanup()
+    {
+        $this->unregisterSapiFunctions();
+    }
+    
+    // SAPI stuff
+
+    /**
+     *
+     * @return void
+     */
+    final public function registerSapiFunctions()
+    {
+        $this->functions = require(__DIR__ . '/Functions.php');
+        
+        // registerFunctions; 
+        try {
+            $this->functions = require(__DIR__ . '/Functions.php');   
+        } catch(AlreadyExistsException $exception) {
+            $this->unregisterSapiFunctions();
+        }
+        
+        foreach($this->functions as $sapiFunc => $nativeFunc) {
+            if(function_exists($nativeFunc)) {
+                \runkit_function_remove($nativeFunc);
+            }
+            
+            if(!function_exists('native_' . $nativeFunc) && function_exists($nativeFunc)) {
+                // das backup der nativen function exisitert noch nicht und wird nun hier erstellt
+                // zusätzlich löschen wir die original function
+                \runkit_function_rename($nativeFunc, 'native_' . $nativeFunc);
+            }  
+            \runkit_function_rename($sapiFunc, $nativeFunc);
+        }
+        
+    }
+
+    /**
+     *
+     * @return void
+     */
+    final public function unregisterSapiFunctions()
+    {
+        
+    }
+    
+    
+    
+    
+    
+    
 }

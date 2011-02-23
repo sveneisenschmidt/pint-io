@@ -1,5 +1,7 @@
 <?php
 
+use pint\Adapters\SapiAdapter\Functions\AlreadyExistsException;
+
 if(!function_exists('sapi_header')) {
     /**
      *
@@ -8,8 +10,10 @@ if(!function_exists('sapi_header')) {
      */
     function sapi_header($header)
     {
-        $GLOBALS['PINT_SAPI']->pushResponseHeader($header);
+        $GLOBALS['_SANDBOX']->pushResponseHeader($header);
     }
+} else {
+    throw new AlreadyExistsException('Function does already exist!');
 }
     
 if(!function_exists('sapi_headers_list')) {
@@ -19,8 +23,10 @@ if(!function_exists('sapi_headers_list')) {
      */
     function sapi_headers_list()
     {
-        return $GLOBALS['PINT_SAPI']->responseHeaders();        
+        $GLOBALS['_SANDBOX']->responseHeaders();    
     }
+} else {
+    throw new AlreadyExistsException('Function does already exist!');
 }
     
 if(!function_exists('sapi_headers_sent')) {
@@ -30,8 +36,10 @@ if(!function_exists('sapi_headers_sent')) {
      */
     function sapi_headers_sent()
     {
-        return false;        
+        // return false;        
     }
+} else {
+    throw new AlreadyExistsException('Function does already exist!');
 }
 
 return array(
