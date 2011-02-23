@@ -6,17 +6,16 @@ use \pint\Mixin\OptionsAbstract;
 
 abstract class MiddlewareAbstract extends OptionsAbstract
 {
-    
     /**
      *
      * @var type 
      */
     protected $app;
-
+    
     /**
      *
-     * @param type $app
-     * @return type 
+     * @param string $app
+     * @return  
      */
     function app($app = null)
     {

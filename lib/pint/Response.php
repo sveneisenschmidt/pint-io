@@ -156,13 +156,18 @@ class Response extends ContainerAbstract
         
         $response[1] = array_merge($response[1], array(
             'Content-Length' => \strlen($response[2]),
-            'Connection' => 'close'
+            'Connection' => 'close',
+            'Server'     => 'pint.IO',
+            'Date'       => gmdate('D, d M Y H:i:s') . ' GMT'
         ));
 
         // response line
         $buffer = \vsprintf("HTTP/1.1 %s %s\r\n", array($response[0], self::$status[$response[0]]));
         
         foreach ($response[1] as $key => $value) {
+            if(is_array($value)) {
+                $value = implode('; ', $value);
+            }
             $buffer .= \vsprintf("%s: %s\r\n", array($key, $value));
         }
         

@@ -84,7 +84,7 @@ abstract class Symfony2Adapter extends AppAbstract
             throw new Exception('Could not find/access bootstrap file: ' . realpath($file));
         }
         
-        require($file);    
+        require_once($file);    
     }
     
     /**
@@ -125,7 +125,6 @@ abstract class Symfony2Adapter extends AppAbstract
     public function prepare() 
     {
         $this->kernel = $this->_kernel();
-        
         $this->prepared = true;
     }
     
@@ -139,6 +138,7 @@ abstract class Symfony2Adapter extends AppAbstract
         if(!is_null($this->kernelFile) && !class_exists($this->kernelClass)) {
             require($this->kernelFile);
         }
+        
         return new $this->kernelClass($this->stage, $this->debug);        
     }
     

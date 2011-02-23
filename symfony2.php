@@ -25,6 +25,9 @@ return array(
 
         // both accept a string, object or closure
         $server->stack()->middleware("pint\Middleware\Logging");
+        $server->stack()->middleware("pint\Middleware\FileInterceptor", array(
+            'dir' => __DIR__ . '/../pint-symfony2/web' 
+        ));
         $server->stack()->app($app);
     },
     "before_fork" => function($server) {
