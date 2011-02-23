@@ -4,7 +4,7 @@ namespace pint\Middleware;
 
 use \pint\Mixin\OptionsAbstract;
 
-class MiddlewareAbstract extends OptionsAbstract
+abstract class MiddlewareAbstract extends OptionsAbstract
 {
     
     /**
@@ -33,15 +33,5 @@ class MiddlewareAbstract extends OptionsAbstract
      * @param array $env
      * @return type 
      */
-    function call(array $env)
-    {
-        $env["pint"]["errors"] []= get_class() . " is missing a call() method.";
-
-        return array(
-            500,
-            array("Content-Type" => "text/html"),
-            "Hi, I'm " . get_class($this) . " and I'm bugging you because you " .
-                "didn't implement a proper call() method for me :-X"
-        );
-    }
+    abstract function call($env = array());
 }

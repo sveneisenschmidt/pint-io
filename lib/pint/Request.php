@@ -332,4 +332,16 @@ class Request extends ContainerAbstract
         return $this->env['PINT_FILES'];   
     }
     
+    /**
+     * 
+     * @return null|string
+     */
+    public function body() 
+    {
+        if(!isset($this->env['PINT_BODY'])) {
+            return null;
+        } 
+        return $this->env['PINT_BODY'];   
+    }
+    
 }

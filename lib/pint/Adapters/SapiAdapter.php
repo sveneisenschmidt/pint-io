@@ -37,7 +37,7 @@ abstract class SapiAdapter extends AppAbstract
      * @param array $env
      * @return void
      */
-    final public function call($env)
+    final public function call(\pint\Request $env)
     {
         $script = $this->getScriptPath();
         if(!file_exists($script)) {
@@ -59,7 +59,7 @@ abstract class SapiAdapter extends AppAbstract
      * @param \pint\Socket\ChildSocket $socket
      * @return void
      */
-    final public function process($env, \pint\Socket\ChildSocket $socket)
+    final public function process(\pint\Request $env, \pint\Socket\ChildSocket $socket)
     {
         $this->globals       = $this->getGlobals($env);
         $this->boundResponse = BoundResponse::bind($socket);

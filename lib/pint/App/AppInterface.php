@@ -6,7 +6,7 @@ interface AppInterface {
     
     public function __construct();
     
-    public function call($env);
+    public function call(\pint\Request $env);
     
-    public function process($env, \pint\Socket\ChildSocket $socket);
+    public function process(\pint\Request $env, \pint\Socket\ChildSocket $socket);
 }
