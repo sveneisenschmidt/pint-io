@@ -23,9 +23,10 @@ return array(
         ));
         $server->stack()->push('example\Symfony2App');
             
-        $server->stack()->push("pint\Middleware\GzipEncoder", array(
+        $server->stack()->push("pint\Middleware\Compressor", array(
             'threshold' => 512, // compress only if the content is bigger than 2048 bytes    
-            'level'     => 6     // compression level -1 - 9 
+            'level'     => 6,   // compression level -1 - 9,
+            // 'support'   => array('gzip', 'deflate')
         ));
     },
     "before_fork" => function($server) {

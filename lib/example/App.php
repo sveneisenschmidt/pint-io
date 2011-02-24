@@ -5,7 +5,7 @@ namespace example;
 class App extends \pint\App\AppAbstract {
     
     
-    function call($env) 
+    function call(\pint\Request $env) 
     {
         return array(
             200,
