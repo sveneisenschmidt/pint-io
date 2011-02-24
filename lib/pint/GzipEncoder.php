@@ -5,7 +5,7 @@ namespace pint\Middleware;
 use pint\Middleware\MiddlewareAbstract,
     pint\Exception;
 
-class GzipDecoder extends MiddlewareAbstract
+class GzipEncoder extends MiddlewareAbstract
 {
     /**
      *
