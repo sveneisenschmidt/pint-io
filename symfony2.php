@@ -15,20 +15,12 @@ return array(
         $loader = new \SplClassLoader("example", "lib");
         $loader->register();
         
-        
-        $app = new \example\Symfony2App;
-        $app->bootstrap(__DIR__ . '/../pint-symfony2/app/bootstrap.php');
-        $app->kernel('AppKernel', __DIR__ . '/../pint-symfony2/app/AppKernel.php');
-        $app->stage('dev', true);
-        $app->prepare();
-        
-
         // both accept a string, object or closure
         $server->stack()->middleware("pint\Middleware\Logging");
         $server->stack()->middleware("pint\Middleware\FileInterceptor", array(
             'dir' => __DIR__ . '/../pint-symfony2/web' 
         ));
-        $server->stack()->app($app);
+        $server->stack()->app('example\Symfony2App');
     },
     "before_fork" => function($server) {
         echo "[master] Forking workers\n";

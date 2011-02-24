@@ -19,6 +19,10 @@ if (!isset($_ENV["PINT_ENV"]) || empty($_ENV["PINT_ENV"]))
 {
     $_ENV["PINT_ENV"] = "development";
 }
+if (!isset($_ENV["PINT_DIR"]) || empty($_ENV["PINT_DIR"]))
+{
+    define('__PINT_DIR__', realpath(__DIR__ . '/..'));
+}
 
 $maxtries = $tries = $server->configVar('startup_tries');
 start:
@@ -36,8 +40,16 @@ try {
     
         } else { 
             $tries--;
-            print "Socket is unavailable or bound to something other. \r\n" . 
-                "Trying it again in 1s. ({$tries} tries left). \r\n\r\n";
+            
+            
+            if($exception instanceof \pint\Server\StillRunningException) {
+                print "Problem: a pint.IO instance is still running or not shutdown. \r\n";
+            }
+            if($exception instanceof \pint\Server\InvalidResourceException) {
+                print "oint.IO could not connect to th specified socket (adress + port). \r\n";
+            }
+                
+            print "Trying it again in 1s. ({$tries} tries left). \r\n\r\n";
             
             if($tries > $maxtries -1) {
                 print "- Please check if pint.IO is already running and bound to a port. \r\n" .
