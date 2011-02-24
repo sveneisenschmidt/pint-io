@@ -6,6 +6,11 @@ use pint\Middleware\MiddlewareAbstract;
 
 class FileInterceptor extends MiddlewareAbstract
 {
+    
+    protected $options = array(
+        'skip' => 0    
+    );
+    
     /**
      *
      * @param array $env
@@ -15,18 +20,30 @@ class FileInterceptor extends MiddlewareAbstract
     {
         if($dir = $this->option('dir')) {
             
+            $skip = (int) $this->option('skip');
             $path = ltrim($env['PATH_INFO'], '/');
             $dir  = rtrim($dir, '/');
-            $file = realpath($dir . '/' . $path);
+    
+            $file = new \SplFileInfo(realpath($dir . '/' . $path));
             
-            if(file_exists($file) && is_file($file)) {
-                $type = mime_content_type($file);
-                $data = file_get_contents($file);
-                return array(
-                    200,
-                    array(),
-                    $data
+            if($file->isFile($file)) {
+                
+                $response = array(
+                    200, 
+                    array(), 
+                    file_get_contents($file)
                 );
+                
+                if($skip > 0) {
+                    $next = $this;
+                    for($i = 0; $i < $skip; $i++) {
+                        $next = $next->next();                
+                    }
+                    
+                    return $next->next($env, $response);
+                }  
+                
+                return $response;
             }
         }
         return $this->next($env);

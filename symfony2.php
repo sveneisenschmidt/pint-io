@@ -18,12 +18,14 @@ return array(
         // both accept a string, object or closure
         $server->stack()->push("pint\Middleware\Logging");
         $server->stack()->push("pint\Middleware\FileInterceptor", array(
-            'dir' => __DIR__ . '/../pint-symfony2/web' 
+            'dir'  => __DIR__ . '/../pint-symfony2/web',
+            'skip' => 1
         ));
         $server->stack()->push('example\Symfony2App');
+            
         $server->stack()->push("pint\Middleware\GzipDecoder", array(
-            'threshold' => 128, // compress only if the content is bigger than 2048 bytes    
-            'level'     => 9     // compression level -1 - 9 
+            'threshold' => 512, // compress only if the content is bigger than 2048 bytes    
+            'level'     => 6     // compression level -1 - 9 
         ));
     },
     "before_fork" => function($server) {

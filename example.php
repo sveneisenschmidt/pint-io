@@ -16,8 +16,8 @@ return array(
         $loader->register();
 
         // both accept a string, object or closure
-        $server->stack()->middleware("pint\Middleware\Logging");
-        $server->stack()->app("example\ScriptApp");
+        $server->stack()->push("pint\Middleware\Logging");
+        $server->stack()->push("example\ScriptApp");
     },
     "before_fork" => function($server) {
         echo "[master] Forking workers\n";

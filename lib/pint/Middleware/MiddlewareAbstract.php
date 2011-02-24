@@ -26,6 +26,10 @@ abstract class MiddlewareAbstract extends OptionsAbstract
      */
     final function next($env = array(), array $response = null)
     {
+        if(empty($env) && is_null($response)) {
+            return $this->next;
+        }
+        
         if($this->next == null) {
             return $response;
         }

@@ -13,13 +13,19 @@ class GzipDecoder extends MiddlewareAbstract
      */
     protected $options = array(
         'threshold' => 512, //bytes  
-        'level'     => 6
+        'level'     => 6,
+        'exclude'   => array(
+            'image/jpeg',
+            'image/jpg',
+            'image/png'
+        )
     );
     
     /**
      *
      * @param array $env
-     * @return mixed 
+     * @param array $response
+     * @return array 
      */
     function call($env = array(), array $response = null)
     {
