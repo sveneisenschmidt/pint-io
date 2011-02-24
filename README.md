@@ -6,7 +6,22 @@ pint.IO - Let's have a pint and serve lots of HTTP requests!
 
 ##Features
 * Forkable Server with support for Workers
-* SapiAdapter for native PHP scripts and small applications
-  * Use die & exit like you ar ein a normal apache or nginx, pint.IO server will not stop
-    execution when you are working with workers
-  * $\_FILES, $\_GET, $\_POST, $\_REQUEST, $\_SERVER, ($\_COOKIES - not yet implemented) is there like you would expect
+* Support for Middleware
+* Adapters for Symfony2 (you don't have to change your app), native PHP scripts and apps (Drupal, Zend Framework and more to come)
+* small footprint and really lightweight
+* easy to configure
+
+
+#### Middleware
+
+Middlewares are powerfull constructs for handling requests and redirecting and/or modifing the responsem like headers and content.
+The functionality is equali to modules know from Apache.
+Table of contents:
+
+1. Built-in/delivered Middleware
+1.1 FileInterceptor
+1.2 GzipEncoder
+
+2. Write your own middleware
+
+
