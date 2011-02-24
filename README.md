@@ -12,16 +12,5 @@ pint.IO - Let's have a pint and serve lots of HTTP requests!
 * easy to configure
 
 
-#### Middleware
-
-Middlewares are powerfull constructs for handling requests and redirecting and/or modifing the responsem like headers and content.
-The functionality is equali to modules know from Apache.
-Table of contents:
-
-1. Built-in/delivered Middleware
-1.1 FileInterceptor
-1.2 GzipEncoder
-
-2. Write your own middleware
-
+[See the pint.IO Wiki for more information](https://github.com/fate/pint/wiki "pint.IO Wiki")
 
