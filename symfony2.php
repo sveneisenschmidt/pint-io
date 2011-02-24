@@ -16,11 +16,15 @@ return array(
         $loader->register();
         
         // both accept a string, object or closure
-        $server->stack()->middleware("pint\Middleware\Logging");
-        $server->stack()->middleware("pint\Middleware\FileInterceptor", array(
+        $server->stack()->push("pint\Middleware\Logging");
+        $server->stack()->push("pint\Middleware\FileInterceptor", array(
             'dir' => __DIR__ . '/../pint-symfony2/web' 
         ));
-        $server->stack()->app('example\Symfony2App');
+        $server->stack()->push('example\Symfony2App');
+        $server->stack()->push("pint\Middleware\GzipDecoder", array(
+            'threshold' => 128, // compress only if the content is bigger than 2048 bytes    
+            'level'     => 9     // compression level -1 - 9 
+        ));
     },
     "before_fork" => function($server) {
         echo "[master] Forking workers\n";

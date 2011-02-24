@@ -65,12 +65,11 @@ abstract class Symfony2Adapter extends AppAbstract
             "Content-Type"    => 'text/html' 
         ), $response->headers->all());
         
-        return array(
+        return $this->next($env, array(
             $response->getStatusCode(),
             $headers,
-            $response->getContent()
-            
-        );
+            $response->getContent()                
+        ));
     }
     
     /**

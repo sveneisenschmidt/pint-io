@@ -17,7 +17,7 @@ class OptionsAbstract
      */
     function __construct(array $options = array())
     {
-        $this->options = $options;
+        $this->options = array_merge($this->options, $options);
     }
     
     /**

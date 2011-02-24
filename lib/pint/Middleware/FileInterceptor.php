@@ -11,7 +11,7 @@ class FileInterceptor extends MiddlewareAbstract
      * @param array $env
      * @return mixed 
      */
-    function call($env = array())
+    function call($env = array(), array $response = null)
     {
         if($dir = $this->option('dir')) {
             
@@ -29,8 +29,6 @@ class FileInterceptor extends MiddlewareAbstract
                 );
             }
         }
-        
-        
-        return $this->app->call($env);
+        return $this->next($env);
     }
 }

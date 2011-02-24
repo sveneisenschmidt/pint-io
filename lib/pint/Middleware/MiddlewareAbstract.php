@@ -10,21 +10,27 @@ abstract class MiddlewareAbstract extends OptionsAbstract
      *
      * @var type 
      */
-    protected $app;
-    
+    protected $next;
+
     /**
      *
-     * @param string $app
-     * @return  
+     * @param array $env
+     * @return type 
      */
-    function app($app = null)
-    {
-        if (!is_null($app))
-        {
-            $this->app = $app;
-        }
+    abstract function call($env = array(), array $response = null);
 
-        return $this->app;
+    /**
+     *
+     * @param array $env
+     * @return type 
+     */
+    final function next($env = array(), array $response = null)
+    {
+        if($this->next == null) {
+            return $response;
+        }
+        
+        return $this->next->call($env, $response);
     }
 
     /**
@@ -32,5 +38,8 @@ abstract class MiddlewareAbstract extends OptionsAbstract
      * @param array $env
      * @return type 
      */
-    abstract function call($env = array());
+    final function set($next)
+    {
+        $this->next = $next;
+    }
 }

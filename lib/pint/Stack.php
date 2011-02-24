@@ -11,42 +11,34 @@ class Stack
 
     protected $app = null;
 
-    function middleware($mw = null, $options = array())
-    {
-        if ($mw) {
-            $this->middleware []= array($mw, $options);
-        } else {
-            return $this->middleware;
+    
+    protected $list = array();
+    
+    
+    function push($item, $options = array())
+    {        
+        if(in_array('pint\App\AppInterface', class_implements($item))) {
+            $this->app = $item;
         }
-    }
-
-    function app($app = null)
-    {
-        if ($app) {
-            $this->app = $app;
-        } else {
-            return $this->app;
-        }
+            
+        $this->list []= array($item, $options);
     }
 
     function build($env, $socket)
     {
-        if (!$this->app()) {
+        if (!$this->app) {
             throw new Exception('No app specified!');
         }
         
-        $stack = $this->buildCallable($this->app());
-        if(method_exists($stack, 'process')) {
-            call_user_func(array($stack, 'process'), $env, $socket);
+        $list  = array_reverse($this->list);
+        $stack = null;
+        
+        foreach($list as $item) {
+            $obj = $this->buildCallable($item[0], $item[1]);
+            $obj->set($stack);
+            $stack = $obj;
         }
         
-        foreach ($this->middleware() as $mw)
-        {
-            $outer = $this->buildCallable($mw[0], $mw[1]);
-            $outer->app($stack);
-            $stack = $outer;
-        }
-
         return $stack;
     }
 

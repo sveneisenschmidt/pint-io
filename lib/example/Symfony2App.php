@@ -13,7 +13,7 @@ class Symfony2App extends \pint\Adapters\Symfony2Adapter
         
         $this->bootstrap(__PINT_DIR__ . '/../pint-symfony2/app/bootstrap.php');
         $this->kernel('AppKernel', __PINT_DIR__ . '/../pint-symfony2/app/AppKernel.php');
-        $this->stage('dev', true);
+        $this->stage('prod', false);
         $this->prepare();
     }
 }
