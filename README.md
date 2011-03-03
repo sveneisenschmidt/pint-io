@@ -12,5 +12,5 @@ pint.IO - Let's have a pint and serve lots of HTTP requests!
 * easy to configure
 
 
-[See the pint.IO Wiki for more information](https://github.com/fate/pint/wiki "pint.IO Wiki")
+[See the pint.IO Wiki for more information](https://github.com/fate/pint-io/wiki "pint.IO Wiki")
 
