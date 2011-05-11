@@ -22,7 +22,7 @@ return array(
         var_dump($app instanceof Symfony\Component\HttpKernel\HttpKernel);
         $server->stack()->push(new pint\Adapters\SilexAdapter($app));
 
-        $server->stack()->push("pint\Middleware\GzipEncoder", array(
+        $server->stack()->push("pint\Middleware\Compressor", array(
             'threshold' => 512, // compress only if the content is bigger than 2048 bytes
             'level'     => 6     // compression level -1 - 9
         ));
