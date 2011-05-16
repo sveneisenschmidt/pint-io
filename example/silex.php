@@ -12,7 +12,7 @@ return array(
     "workers" => 1,
     "max_requests" => 0,
     "boot" => function($server) {
-        $loader = new \SplClassLoader("example", "lib");
+        $loader = new \SplClassLoader("example", "example/lib");
         $loader->register();
 
         // both accept a string, object or closure
