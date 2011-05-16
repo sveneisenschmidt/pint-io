@@ -2,26 +2,26 @@
 <?php
 namespace pint;
 
-$path = dirname(dirname(__FILE__));
+$path = realpath(__DIR__ . '/..');
 require "$path/lib/SplClassLoader.php";
 
 $loader = new \SplClassLoader("pint", "$path/lib");
 $loader->register();
 
 $file = isset($_SERVER["argv"][1]) ? realpath($_SERVER["argv"][1]) : null;
-if (empty($file))
-{
+if (empty($file)) {
     die("Please pass a config file.\n");
 }
 $server = Server::fromAppFile($file);
 
-if (!isset($_ENV["PINT_ENV"]) || empty($_ENV["PINT_ENV"]))
-{
+if(!isset($_ENV["PINT_ENV"]) || empty($_ENV["PINT_ENV"])) {
     $_ENV["PINT_ENV"] = "development";
 }
-if (!isset($_ENV["PINT_DIR"]) || empty($_ENV["PINT_DIR"]))
-{
-    define('__PINT_DIR__', realpath(__DIR__ . '/..'));
+if(!isset($_ENV["PINT_DIR"]) || empty($_ENV["PINT_DIR"])) {
+    define('__PINT_DIR__', $path);
+}
+if(!extension_loaded('http')) {
+    throw new Exception('Extension pecl_http is not enabled.');
 }
 
 $maxtries = $tries = $server->configVar('startup_tries');
@@ -40,7 +40,6 @@ try {
     
         } else { 
             $tries--;
-            
             
             if($exception instanceof \pint\Server\StillRunningException) {
                 print "Problem: a pint.IO instance is still running or not shutdown. \r\n";
