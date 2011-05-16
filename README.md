@@ -1,7 +1,7 @@
 **pint**
 *n.* The [pint](http://en.wikipedia.org/wiki/Pint "Explanation on wikipedia") is an English unit of volume or capacity.
 
-pint.IO - Let's have a pint and serve lots of HTTP requests!
+pint.IO - Let's serve lots of HTTP requests!
 =
 
 ##Features
