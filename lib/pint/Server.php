@@ -171,7 +171,9 @@ class Server
         if (\file_exists($this->config["pid_file"])) {
             throw new StillRunningException($this->config["pid_file"] . " already exists.");
         }
-        \file_put_contents($this->config["pid_file"], $this->pid());
+        if(!@\file_put_contents($this->config["pid_file"], $this->pid())) {
+            throw new \Exception("Could not create process file");
+        }
         
         \register_shutdown_function(array('\pint\Server', 'cleanup'), $this, array(
             'tmp'

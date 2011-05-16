@@ -2,6 +2,9 @@ PHP Extensions via PECL
 =======================
 
 * pecl_http
+
+SapiAdapter
+----------_
 * runkit
     - only working version comes from github, download the tgz file
-      andinstall it via (sudo) pecl install /path/to/runkit_package.tgz 
+      and install it via (sudo) pecl install /path/to/runkit_package.tgz 
