@@ -89,11 +89,13 @@ class Server
      */
     function __construct(array $config = array())
     {
-        $this->configDefaults["boot"] = function($server) {};
-        $this->configDefaults["before_fork"] = function($server) {};
-        $this->configDefaults["after_fork"] = function($server, $worker) {};
+        $this->configDefaults = array_merge($this->configDefaults, array(
+            'boot'          => function($server) {},
+            'before_fork'   => function($server) {},
+            'after_fork'    => function($server, $worker) {},
+        ));
+            
         $this->config($config, true);
-
         $this->stack = new Stack();
     }
 
@@ -106,8 +108,7 @@ class Server
      */
     function config(array $config = array(), $reset = false)
     {
-        if (!empty($config))
-        {
+        if (!empty($config)) {
             $this->config = \array_merge(
                     $reset ? $this->configDefaults : $this->config, $config);
         }
@@ -172,7 +173,7 @@ class Server
             throw new StillRunningException($this->config["pid_file"] . " already exists.");
         }
         if(!@\file_put_contents($this->config["pid_file"], $this->pid())) {
-            throw new \Exception("Could not create process file");
+            throw new \pint\Exception("Could not create process file");
         }
         
         \register_shutdown_function(array('\pint\Server', 'cleanup'), $this, array(
@@ -181,14 +182,11 @@ class Server
 
         $this->config["boot"]($this);  // boot application
         list($host, $port) = \explode(":", $this->config["listen"]);
-
         
         $this->socket = Socket::create($this->config["listen"]);
         $this->socket->nonblock(1);
         
         echo "Listening on http://" . $this->config["listen"] . "\n";
-
-
 
         $this->config["before_fork"]($this);
         $this->forkWorkers();
@@ -214,15 +212,11 @@ class Server
      */
     function loop()
     {
-        while (!$this->shuttingDown())
-        {
-            if ($this->config["fork"])
-            {
+        while (!$this->shuttingDown()) {
+            if ($this->config["fork"]) {
                 usleep(100000);
                 $this->maintainWorkers();
-            }
-            else
-            {
+            } else {
                 $this->workers[0]->serve();
             }
 
@@ -231,16 +225,12 @@ class Server
         }
 
         // main loop finished, start shutting down
-        if ($this->config["fork"])
-        {
+        if ($this->config["fork"]) {
             echo "Shutting down workers\n";
-
-            foreach ($this->workers as $worker)
-            {
+            foreach ($this->workers as $worker) {
                 // tell the workers to die
                 $worker->shutdown();
             }
-
             $this->maintainWorkers(false);
         }
 
@@ -263,8 +253,7 @@ class Server
     function forkWorkers()
     {
         $count = $this->config["fork"] ? $this->config["workers"] : 1;
-        for ($i = count($this->workers); $i < $count; $i++)
-        {
+        for ($i = count($this->workers); $i < $count; $i++) {
             $worker = new Worker($this, $this->socket);
             $this->workers []= $worker;
             if ($this->config["fork"]) {
@@ -283,10 +272,8 @@ class Server
      */
     function maintainWorkers($forkNew = true)
     {
-        foreach ($this->workers as $worker)
-        {
-            if ($worker->responsive() === false)
-            {
+        foreach ($this->workers as $worker) {
+            if ($worker->responsive() === false) {
                 $worker->kill();
             }
         }
@@ -296,8 +283,7 @@ class Server
         // how long does it take wait() to timeout?
         // retry after timeout? exit the master?
         pcntl_wait($status, WNOHANG);
-        foreach ($this->workers as $i => $worker)
-        {
+        foreach ($this->workers as $i => $worker) {
             usleep(100);
             if (!$worker->alive()) {
                 unset($this->workers[$i]);
@@ -353,8 +339,7 @@ class Server
     public static function fromAppFile($file)
     {
         $config = require $file;
-        if (!is_array($config))
-        {
+        if (!is_array($config)) {
             throw new Exception("Could not find a config in $file");
         }
         return new self($config);

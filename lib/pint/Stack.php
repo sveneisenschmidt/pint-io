@@ -49,8 +49,7 @@ class Stack
     {
         $obj = is_object($src) ? $src : new $src($options);
         
-        if (!method_exists($obj, "call"))
-        {
+        if (!method_exists($obj, "call")) {
             throw new Exception(get_class($obj) . " does not have a call() method.");
         }
 

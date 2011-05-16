@@ -175,8 +175,7 @@ class Response extends ContainerAbstract
         $bytes = \strlen($buffer);
         $written = 0;
         
-        while ($written < $bytes)
-        {
+        while ($written < $bytes) {
             $x = $socket->write($buffer, $bytes);
             if (!is_int($x)) {
                 echo "[{$this->pid()}] write error!\n";

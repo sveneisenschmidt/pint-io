@@ -115,15 +115,13 @@ class Worker
     function fork()
     {
         $pid = pcntl_fork();
-        if ($pid === false)
-        {
+        if ($pid === false) {
             // this can happen on windows, e.g.
             throw new Exception("pint was unable to fork.");
         }
 
         $this->forked = ($pid == 0);
-        if ($this->forked)
-        {
+        if ($this->forked) {
             // we're inside the worker
             $this->pid = posix_getpid();
 
@@ -195,8 +193,7 @@ class Worker
      */
     function responsive()
     {
-        if (!file_exists($this->pingFile()))
-        {
+        if (!file_exists($this->pingFile())) {
             return null;
         }
 
@@ -216,8 +213,7 @@ class Worker
      */
     function loop()
     {
-        while (!$this->shuttingDown())
-        {
+        while (!$this->shuttingDown()) {
             $this->serve();
             $this->ping();
 
@@ -243,7 +239,6 @@ class Worker
             if($socket->isClosed()) {
                 return;
             } 
-                
             $response = Response::badRequest();
         } else {
             try {
@@ -254,10 +249,8 @@ class Worker
         }
          
         Response::write($socket, $response);    
-        
         // die if we reached the request limit
-        if ($this->requests == $config["max_requests"])
-        {
+        if ($this->requests == $config["max_requests"]) {
             $this->shutdown();
         }
     }
@@ -281,8 +274,7 @@ class Worker
     {
 
         $this->shuttingDown = true;
-        if (!$this->forked)
-        {
+        if (!$this->forked) {
             posix_kill($this->pid(), SIGTERM);
         }
     }

@@ -42,8 +42,7 @@ class Request extends ContainerAbstract
         '\pint\Request\Filters::createRemoteEnv',
         '\pint\Request\Filters::createPathInfoEnv',
         '\pint\Request\Filters::validateContentType',
-        '\pint\Request\Filters\PostPutFilter::parse',
-        
+        '\pint\Request\Filters\PostPutFilter::parse'
     );
     
     /**
